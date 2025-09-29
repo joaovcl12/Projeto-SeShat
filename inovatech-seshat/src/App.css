@@ -1,0 +1,116 @@
+/* src/App.css */
+
+/* Define estilos base para a página inteira.
+  - background-color: Um azul bem escuro para o fundo.
+    Usamos '!important' para garantir que nosso estilo sobreponha o do Bootstrap.
+  - color: Um tom de cinza claro para o texto padrão.
+  - font-smoothing: Melhora a aparência das fontes, deixando-as menos serrilhadas.
+*/
+body {
+  background-color: #0c0a1a !important;
+  color: #d1d5db;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Cria o efeito de vidro fosco para o cabeçalho.
+  - background-color: Branco com 80% de opacidade.
+  - backdrop-filter: Aplica um desfoque (blur) em tudo que está atrás do elemento.
+*/
+.header-translucent {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(10px);
+}
+
+/* Estiliza a seção principal (Hero).
+  - position: relative: Permite que elementos filhos (como os brilhos ::before) sejam posicionados em relação a este.
+  - overflow: hidden: Esconde qualquer parte dos brilhos que "vaze" para fora da seção.
+  - background-image: Cria dois gradientes radiais para dar uma iluminação sutil e complexa ao fundo.
+  - border-bottom: Adiciona uma linha sutil na parte de baixo.
+*/
+.hero-section {
+  position: relative;
+  overflow: hidden;
+  background-color: #0c0a1a;
+  background-image: radial-gradient(circle at 10% 20%, rgba(121, 9, 121, 0.2), transparent 40%),
+                    radial-gradient(circle at 90% 80%, rgba(0, 121, 121, 0.2), transparent 40%);
+  padding: 8rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Cria um "pseudo-elemento" para ser um brilho decorativo no fundo do Hero.
+  - '::before' cria um elemento "virtual" antes do conteúdo do .hero-section.
+  - 'position: absolute': Posiciona o brilho em relação ao .hero-section.
+  - 'background': Cria um gradiente radial para o brilho.
+  - 'filter: blur(100px)': Desfoca intensamente o elemento para criar um efeito de luz suave.
+  - 'z-index: 0': Coloca o brilho atrás do conteúdo de texto.
+*/
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  left: -100px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.3), transparent 70%);
+  filter: blur(100px);
+  z-index: 0;
+}
+
+/* Cria o efeito de texto em gradiente.
+  - 'background': Define um gradiente de cores como fundo do texto.
+  - '-webkit-background-clip' e 'background-clip': Faz com que o fundo seja "cortado" no formato do texto.
+  - 'color: transparent': Deixa o texto transparente para que o fundo (o gradiente) apareça através dele.
+*/
+.gradient-text {
+  background: linear-gradient(90deg, #3b82f6, #10b981, #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/*
+  Estiliza os cards da seção de funcionalidades.
+  - background-color: Um fundo branco com 5% de opacidade, quase transparente.
+  - border: Uma borda sutil.
+  - transition: Faz com que as mudanças de 'transform' e 'background-color' aconteçam suavemente em 0.3s.
+*/
+.feature-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+/*
+  Define o que acontece quando o mouse passa por cima do card.
+  - 'transform: translateY(-10px)': Move o card 10px para cima.
+  - 'background-color': Deixa o fundo um pouco mais claro (10% de opacidade).
+*/
+.feature-card:hover {
+  transform: translateY(-10px);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Classe que aplica a animação 'fadeInUp' a um elemento.
+  - 'opacity: 0': O elemento começa invisível para que a animação seja visível.
+*/
+.fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* Define os "passos" da animação chamada 'fadeInUp'.
+  - 'from': O estado inicial (invisível e 30px abaixo da posição final).
+  - 'to': O estado final (totalmente visível e na posição original).
+  'forwards' na declaração da animação garante que o elemento permaneça no estado final.
+*/
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
