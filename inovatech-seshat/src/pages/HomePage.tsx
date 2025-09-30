@@ -26,7 +26,7 @@ export function HomePage() {
       <main className="hero-section text-center">
         <div className="container" style={{ position: 'relative', zIndex: 1 }}>
           <h1 className="display-3 fw-bolder gradient-text fade-in-up">
-            Revolucione Seus Estudos com Inteligência Artificial
+            Revolucione Seus Estudos com Inteligêncial
           </h1>
           <p className="lead text-white-50 my-4 mx-auto fade-in-up" style={{ maxWidth: '700px', animationDelay: '0.2s' }}>
             A IAra é sua mentora de estudos particular, projetada para impulsionar sua aprovação nos vestibulares e concursos mais importantes da Região Norte.
