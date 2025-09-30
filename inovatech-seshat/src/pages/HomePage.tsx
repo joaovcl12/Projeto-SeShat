@@ -34,7 +34,7 @@ export function HomePage() {
           <div className="mt-5 fade-in-up" style={{ animationDelay: '0.4s' }}>
             {/* O componente Link do React Router usa a propriedade 'to' para definir o destino. */}
             <Link
-              to="/chat" 
+              to="/chat"
               className="btn btn-success btn-lg fw-bold px-5 py-3 rounded-pill shadow"
             >
               Começar a Estudar Agora
