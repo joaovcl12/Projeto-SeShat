@@ -1,114 +1,233 @@
 /* src/App.css */
 
-/* Define estilos base para a página inteira.
-  - background-color: Um azul bem escuro para o fundo.
-    Usamos '!important' para garantir que nosso estilo sobreponha o do Bootstrap.
-  - color: Um tom de cinza claro para o texto padrão.
-  - font-smoothing: Melhora a aparência das fontes, deixando-as menos serrilhadas.
-*/
+/* ... Código body e scrollbar permanece o mesmo ... */
+
 body {
-  background-color: #0c0a1a !important;
+  background-color: #070e24 !important;
+  /* Azul escuro para o fundo subaquático */
   color: #d1d5db;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Define a largura da barra de rolagem (geralmente 8px a 12px é um bom tamanho) */
+body::-webkit-scrollbar {
+  width: 10px;
+  /* Largura para a barra vertical */
+  height: 10px;
+  /* Altura para a barra horizontal */
+}
+
+/* Estiliza o "caminho" (track) por onde a barra desliza.
+ * - Cor: Um tom bem escuro para se misturar ao fundo 'body'.
+ * - Opacidade: Suave.
+ */
+body::-webkit-scrollbar-track {
+  background: #070e24;
+  /* Um preto muito sutil para o fundo da barra */
+  border-radius: 10px;
+}
+
+/* Estiliza o "polegar" (thumb) - a parte que o usuário arrasta.
+ * - Cor: Um azul sutil (como se fosse luz refletida na água) que combina com o tema.
+ * - Arredondamento: Deixa as pontas da barra arredondadas.
+ * - Transição: Adiciona um efeito suave ao passar o mouse.
+ */
+body::-webkit-scrollbar-thumb {
+  background-color: #00254d;
+  /* Azul primário, sutil no fundo escuro */
+  border-radius: 10px;
+  /* Deixa o polegar arredondado */
+  border: 2px solid transparent;
+  /* Adiciona uma borda transparente para dar um pequeno 'padding' visual dentro do track */
+  background-clip: content-box;
+  /* Garante que o background (cor do thumb) fique dentro da borda invisível */
+  transition: background-color 0.3s ease;
+}
+
+/* Estiliza o polegar quando o mouse passa por cima (hover). */
+body::-webkit-scrollbar-thumb:hover {
+  background-color: #61b0fb46;
+  /* Um azul mais claro para o hover, como destaque de luz */
+}
+
+/* Estiliza o canto (corner) onde as barras vertical e horizontal se encontram. */
+body::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Cria o efeito de vidro fosco para o cabeçalho.
-  - background-color: Branco com 80% de opacidade.
-  - backdrop-filter: Aplica um desfoque (blur) em tudo que está atrás do elemento.
-*/
+ * - background-color: Branco com 80% de opacidade.
+ * - backdrop-filter: Aplica um desfoque (blur) em tudo que está atrás do elemento.
+ */
 .header-translucent {
   background-color: rgba(255, 255, 255, 0.8) !important;
   backdrop-filter: blur(10px);
 }
 
-/* Estiliza a seção principal (Hero).
-  - position: relative: Permite que elementos filhos (como os brilhos ::before) sejam posicionados em relação a este.
-  - overflow: hidden: Esconde qualquer parte dos brilhos que "vaze" para fora da seção.
-  - background-image: Cria dois gradientes radiais para dar uma iluminação sutil e complexa ao fundo.
-  - border-bottom: Adiciona uma linha sutil na parte de baixo.
-*/
+/* Estiliza a seção principal (Hero). */
 .hero-section {
   position: relative;
   overflow: hidden;
-  background-color: #0c0a1a;
-  background-image: radial-gradient(circle at 10% 20%, rgba(121, 9, 121, 0.2), transparent 40%),
-                    radial-gradient(circle at 90% 80%, rgba(0, 121, 121, 0.2), transparent 40%);
-  padding: 8rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  /* Gradiente linear para simular profundidade da água */
+  background: linear-gradient(180deg, #005d92 0%, #001e4e 100%);
+  /* Reduzimos o padding vertical para compensar a imagem ao lado */
+  padding: 3rem 0 8rem;
+  /*padding: (top) (left/right) (bottom)*/
+  border-bottom: none;
+  box-shadow: inset 0 60px 100px -30px rgba(46, 161, 255, 0.1),
+    inset 0 -60px 100px -30px rgba(0, 0, 0, 0.5);
 }
 
-/* Cria um "pseudo-elemento" para ser um brilho decorativo no fundo do Hero.
-  - '::before' cria um elemento "virtual" antes do conteúdo do .hero-section.
-  - 'position: absolute': Posiciona o brilho em relação ao .hero-section.
-  - 'background': Cria um gradiente radial para o brilho.
-  - 'filter: blur(100px)': Desfoca intensamente o elemento para criar um efeito de luz suave.
-  - 'z-index: 0': Coloca o brilho atrás do conteúdo de texto.
-*/
-.hero-section::before {
+.hero-section::after {
   content: '';
   position: absolute;
-  top: -100px;
-  left: -100px;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(79, 70, 229, 0.3), transparent 70%);
-  filter: blur(100px);
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 150px;
+  /* Altura da base subaquática */
+  /* SVG com ondulações mais presentes, mas ainda suaves */
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 150" preserveAspectRatio="none"><path d="M0,100 C180,140 320,60 500,100 C680,140 820,60 1000,100 L1000,150 L0,150 Z" fill="%23070e24"></path></svg>') no-repeat bottom center;
+  /* Fundo ondulado com mais curvas */
+  background-size: cover;
   z-index: 0;
+  opacity: 1;
 }
 
-/* Cria o efeito de texto em gradiente.
-  - 'background': Define um gradiente de cores como fundo do texto.
-  - '-webkit-background-clip' e 'background-clip': Faz com que o fundo seja "cortado" no formato do texto.
-  - 'color: transparent': Deixa o texto transparente para que o fundo (o gradiente) apareça através dele.
-*/
+/* NOVO: Estilização para o wrapper do conteúdo do Hero */
+.hero-content-wrapper {
+  /* Garante que o conteúdo fique centrado e com padding nas laterais */
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+  /* Adiciona um pequeno espaçamento entre a imagem e o texto no layout desktop */
+  gap: 3rem;
+  /* Garante que a imagem e o texto fiquem na frente do efeito after */
+  position: relative;
+  z-index: 1;
+}
+
+/* NOVO: Estilização da imagem da Iara */
+.iara-img {
+  /* Define um tamanho máximo para que a imagem fique menor no layout lado a lado */
+  max-width: 400px;
+  /* Ajuste este valor conforme desejar */
+  height: auto;
+  margin-bottom: 0rem;
+  /* Espaçamento padrão para o layout mobile */
+}
+
+/* NOVO: Media Query para telas médias (md) e maiores */
+@media (min-width: 768px) {
+
+  /* Ajusta o padding vertical do Hero para ficar mais centralizado */
+  .hero-section {
+    padding: 10rem 0;
+  }
+
+  /* Ajusta a imagem e o texto para o layout lado a lado */
+  .iara-img {
+    max-width: 500px;
+    /* Um pouco maior no desktop */
+    margin-bottom: 0;
+    /* Remove o espaçamento vertical */
+    margin-right: 2rem;
+    /* Adiciona espaçamento à direita da imagem */
+  }
+
+  /* REMOVIDO: max-width: none e text-align: left.
+     Isto permite que as classes do Bootstrap no HTML (text-center, text-md-start)
+     e o novo estilo de justificação funcionem. */
+}
+
+@media (min-width: 1400px) {
+
+  /* 1. Aumenta o Padding Vertical da Seção Hero para usar o espaço extra em monitores grandes */
+  .hero-section {
+    padding: 3rem 0;
+    /* Aumenta o espaço acima e abaixo do conteúdo */
+  }
+
+  /* 2. Aumenta o tamanho máximo da imagem da Iara */
+  .iara-img {
+    max-width: 700px;
+    /* Garante que o espaçamento lateral seja mantido ou ajustado */
+    margin-right: 0rem;
+    z-index: 2;
+  }
+
+  /* 3. Ajusta o tamanho da fonte principal para um impacto maior */
+  .hero-content-wrapper .display-3 {
+    font-size: 3rem !important;
+    /* Aumenta a fonte do título 'Revolucione Seus Estudos...' */
+  }
+}
+
+/* Centraliza o botão 'Começar a Estudar Agora' no layout lado a lado (Desktop) */
+@media (min-width: 768px) {
+
+  /* Aplica display flex ao wrapper do botão para centralizar seu conteúdo */
+  .text-content>div:last-child {
+    display: flex;
+    justify-content: center;
+    /* Centraliza horizontalmente o botão */
+    width: 100%;
+    /* Garante que o wrapper ocupe a largura total */
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+
+/* Cria o efeito de texto em gradiente. */
 .gradient-text {
-  background: linear-gradient(90deg, #3b82f6, #10b981, #8b5cf6);
+  /* Mantido para o texto */
+  background: linear-gradient(90deg, #3bd5ff, #21a1f1, #29d6b9);
+  /* Cores mais frias */
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 /*
-  Estiliza os cards da seção de funcionalidades.
-  - background-color: Um fundo branco com 5% de opacidade, quase transparente.
-  - border: Uma borda sutil.
-  - transition: Faz com que as mudanças de 'transform' e 'background-color' aconteçam suavemente em 0.3s.
-*/
+ * Estiliza os cards da seção de funcionalidades.
+ * - background-color: Um fundo branco com 5% de opacidade, quase transparente.
+ * - border: Uma borda sutil.
+ * - transition: Faz com que as mudanças de 'transform' e 'background-color' aconteçam suavemente em 0.3s.
+ */
 .feature-card {
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #0c1c3a;
+  /* Um pouco mais visível no novo fundo */
+  border: 1px solid #0c1c3a;
+  /* Borda um pouco mais definida */
   transition: transform 0.3s ease, background-color 0.3s ease;
 }
 
 /*
-  Define o que acontece quando o mouse passa por cima do card.
-  - 'transform: translateY(-10px)': Move o card 10px para cima.
-  - 'background-color': Deixa o fundo um pouco mais claro (10% de opacidade).
-*/
+ * Define o que acontece quando o mouse passa por cima do card.
+ * - 'transform: translateY(-10px)': Move o card 10px para cima.
+ * - 'background-color': Deixa o fundo um pouco mais claro (10% de opacidade).
+ */
 .feature-card:hover {
   transform: translateY(-10px);
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: #102449;
+  /* Mais opacidade no hover */
 }
 
-/* Classe que aplica a animação 'fadeInUp' a um elemento.
-  - 'opacity: 0': O elemento começa invisível para que a animação seja visível.
-*/
+/* Classe que aplica a animação 'fadeInUp' a um elemento. */
 .fade-in-up {
   opacity: 0;
   animation: fadeInUp 0.8s ease-out forwards;
 }
 
-/* Define os "passos" da animação chamada 'fadeInUp'.
-  - 'from': O estado inicial (invisível e 30px abaixo da posição final).
-  - 'to': O estado final (totalmente visível e na posição original).
-  'forwards' na declaração da animação garante que o elemento permaneça no estado final.
-*/
+/* Define os "passos" da animação chamada 'fadeInUp'. */
 @keyframes fadeInUp {
   from {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

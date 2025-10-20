@@ -24,21 +24,33 @@ export function HomePage() {
 
       {/* Seção Principal (Hero) com as nossas classes customizadas de estilo e animação. */}
       <main className="hero-section text-center">
-        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-          <h1 className="display-3 fw-bolder gradient-text fade-in-up">
-            Revolucione Seus Estudos com Inteligência Artificial
-          </h1>
-          <p className="lead text-white-50 my-4 mx-auto fade-in-up" style={{ maxWidth: '700px', animationDelay: '0.2s' }}>
-            A IAra é sua mentora de estudos particular, projetada para impulsionar sua aprovação nos vestibulares e concursos mais importantes da Região Norte.
-          </p>
-          <div className="mt-5 fade-in-up" style={{ animationDelay: '0.4s' }}>
-            {/* O componente Link do React Router usa a propriedade 'to' para definir o destino. */}
-            <Link
-              to="/chat"
-              className="btn btn-success btn-lg fw-bold px-5 py-3 rounded-pill shadow"
-            >
-              Começar a Estudar Agora
-            </Link>
+        {/* NOVO: Usamos container e d-flex para habilitar o layout lado a lado */}
+        <div className="container hero-content-wrapper d-flex flex-column flex-md-row align-items-center justify-content-center">
+
+          {/* A imagem agora está dentro do novo wrapper e tem uma classe para estilização */}
+          <img
+            src='/public/iara2.png'
+            alt='Mascote Iara'
+            className='iara-img'
+          />
+
+          {/* O container de texto foi substituído por uma div para ser um par flexbox */}
+          <div className="text-content" style={{ position: 'relative', zIndex: 1 }}>
+            <h1 className="display-3 fw-bolder gradient-text fade-in-up text-md-start">
+              Revolucione seus Estudos com Inteligência Artificial
+            </h1>
+            <p className="lead text-white-50 my-4 mx-auto mx-md-0 fade-in-up text-md-start" style={{ maxWidth: '700px', animationDelay: '0.2s' }}>
+              A IAra é sua mentora de estudos particular, projetada para impulsionar sua aprovação nos vestibulares e concursos mais importantes da Região Norte.
+            </p>
+            <div className="mt-5 fade-in-up text-md-start" style={{ animationDelay: '0.4s' }}>
+              {/* O componente Link do React Router usa a propriedade 'to' para definir o destino. */}
+              <Link
+                to="/chat"
+                className="btn btn-success btn-lg fw-bold px-5 py-3 rounded-pill shadow"
+              >
+                Vamos começar!
+              </Link>
+            </div>
           </div>
         </div>
       </main>
