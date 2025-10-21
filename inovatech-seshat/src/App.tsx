@@ -14,8 +14,8 @@ function App() {
       <nav className="container justify-content-between">
         {/* 2. Trocamos a tag 'a' pelo componente 'Link' do React Router.
             A propriedade 'href' vira 'to'. */}
-        <Link className="navbar-brand fs-4 fw-bold text-dark" to="/">
-          Projeto SeShat - <span className="text-primary">IAra</span>
+        <Link className="navbar-brand fs-4 fw-bold text-white" to="/">
+          Projeto SeShat - <span className="text-white">IAra</span>
         </Link>
 
         {/* 3. Adicionamos a mesma condição do rodapé aqui:
@@ -23,7 +23,7 @@ function App() {
             for DIFERENTE de '/chat'.
         */}
         {location.pathname !== '/chat' && (
-          <Link to="/chat" className="btn btn-primary fw-bold">
+          <Link to="/chat" className="access-btn btn btn-primary fw-bold">
             Acessar Chat
           </Link>
         )}
@@ -39,9 +39,9 @@ function App() {
       </div>
     </footer>
   );
-  
+
   return (
-    <div className="d-flex flex-column" style={{minHeight: '100vh'}}>
+    <div className="d-flex flex-column" style={{ minHeight: '100vh' }}>
       <Header />
       <Outlet />
       {location.pathname !== '/chat' && <Footer />}

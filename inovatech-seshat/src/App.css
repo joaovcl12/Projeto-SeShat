@@ -61,8 +61,13 @@ body::-webkit-scrollbar-corner {
  * - backdrop-filter: Aplica um desfoque (blur) em tudo que está atrás do elemento.
  */
 .header-translucent {
-  background-color: rgba(255, 255, 255, 0.8) !important;
+  background-color: #008dc5 !important;
   backdrop-filter: blur(10px);
+}
+
+.access-btn {
+  background-color: #00b7ff;
+  border: none;
 }
 
 /* Estiliza a seção principal (Hero). */

@@ -5,8 +5,9 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import App from './App.tsx';
-import   HomePage from './pages/HomePage.tsx'; // Importa a HomePage
+import HomePage from './pages/HomePage.tsx'; // Importa a HomePage
 import { ChatPage } from './pages/ChatPage.tsx'; // Importa a ChatPage
+import LoginRegister from "./pages/LoginRegister.tsx";// Importa a LoginRegister
 import './index.css';
 
 // Cria o nosso roteador
@@ -22,6 +23,10 @@ const router = createBrowserRouter([
       {
         path: 'chat', // Esta é a rota "/chat"
         element: <ChatPage />,
+      },
+      {
+        path: 'login', // Esta é a rota "/login"
+        element: <LoginRegister />,
       },
     ],
   },

@@ -7,14 +7,6 @@ import { Link } from 'react-router-dom';
 // O '../' é necessário para "subir" um nível de pasta, de 'pages' para 'src'.
 import '../App.css';
 
-// Este é um "helper component" (componente de ajuda) que só usamos nesta página.
-// Ele cria o círculo azul estilizado para envolver os ícones na seção de funcionalidades.
-const FeatureIcon = ({ children }: { children: React.ReactNode }) => (
-  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-    {children}
-  </div>
-);
-
 // Este é o componente principal da Homepage.
 export function HomePage() {
   return (
@@ -29,7 +21,7 @@ export function HomePage() {
 
           {/* A imagem agora está dentro do novo wrapper e tem uma classe para estilização */}
           <img
-            src='/public/iara2.png'
+            src='/iara2.png'
             alt='Mascote Iara'
             className='iara-img'
           />
@@ -45,7 +37,7 @@ export function HomePage() {
             <div className="mt-5 fade-in-up text-md-start" style={{ animationDelay: '0.4s' }}>
               {/* O componente Link do React Router usa a propriedade 'to' para definir o destino. */}
               <Link
-                to="/chat"
+                to="/login"
                 className="btn btn-success btn-lg fw-bold px-5 py-3 rounded-pill shadow"
               >
                 Vamos começar!
