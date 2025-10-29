@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import styles from './ChatPage.module.css';
 
+const API_URL = "https://seshat-api-m30w.onrender.com";
 // --- Tipos ---
 type Message = { id: number; text: string; sender: 'user' | 'ai'; };
 type MateriasResponse = {
@@ -9,6 +10,7 @@ type MateriasResponse = {
 };
 
 // --- Componentes de Ajuda ---
+
 
 // Componente para renderizar o ícone de avatar da IA.
 const AiAvatar = () => (<div className={`${styles.avatar} d-flex align-items-center justify-content-center`}><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" className="bi bi-robot" viewBox="0 0 16 16"><path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5ZM3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.58 26.58 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.933.933 0 0 1-.765.935c-.845.147-2.34.346-4.235.346-1.895 0-3.39-.2-4.235-.346A.933.933 0 0 1 3 9.219V8.062Zm4.542-.827a.25.25 0 0 0-.217.068l-.92.9a24.767 24.767 0 0 1-1.871-.183.25.25 0 0 0-.068.217l.22.92a.25.25 0 0 0 .217.217c.134.04.27.082.412.126l.22.92a.25.25 0 0 0 .217.217c.134.04.27.082.412.126l.22.92a.25.25 0 0 0 .217.217c.134.04.27.082.412.126l.22.92a.25.25 0 0 0 .217.217c.134.04.27.082.412.126l.92.22a.25.25 0 0 0 .217-.068l.92-.9a.25.25 0 0 0 .068-.217l-.22-.92a.25.25 0 0 0-.217-.217c-.134-.04-.27-.082-.412-.126l-.22-.92a.25.25 0 0 0-.217-.217c-.134-.04-.27-.082-.412-.126l-.22-.92a.25.25 0 0 0-.217-.217c-.134-.04-.27-.082-.412-.126l-.92-.22a.25.25 0 0 0-.217.068Z" /><path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1Zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5Z" /></svg></div>);
@@ -76,7 +78,7 @@ export function ChatPage() {
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/materias');
+        const response = await fetch(`${API_URL}/materias`);
         if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
         const data: MateriasResponse = await response.json();
         const availableSubjects = data.materias_disponiveis || [];
