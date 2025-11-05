@@ -3,27 +3,33 @@
 /* Container principal com o mesmo fundo escuro da homepage */
 .chatPageContainer {
   height: calc(100vh - 72px);
-  background-color: #0c0a1a;
-  background-image: radial-gradient(circle at 10% 20%, rgba(121, 9, 121, 0.2), transparent 40%),
-                    radial-gradient(circle at 90% 80%, rgba(0, 121, 121, 0.2), transparent 40%);
+  background: linear-gradient(180deg, #005d92 0%, #001e4e 100%);
+  box-shadow: inset 0 60px 100px -30px rgba(46, 161, 255, 0.1),
+    inset 0 -60px 100px -30px rgba(0, 0, 0, 0.5);
   padding: 1.5rem;
-  display: flex; /* Usamos flexbox para o layout principal */
-  gap: 1.5rem;   /* Espaçamento entre a sidebar e o chat */
+  display: flex;
+  /* Usamos flexbox para o layout principal */
+  gap: 1.5rem;
+  /* Espaçamento entre a sidebar e o chat */
 }
 
 /* Container da Sidebar que controla a largura e a transição */
 .sidebarContainer {
-  flex-shrink: 0; /* Impede que a sidebar encolha mais do que o definido */
-  transition: width 0.3s ease-in-out; /* Animação suave da largura */
+  flex-shrink: 0;
+  /* Impede que a sidebar encolha mais do que o definido */
+  transition: width 0.3s ease-in-out;
+  /* Animação suave da largura */
   height: 100%;
 }
 
 .sidebarOpen {
-  width: 320px; /* Largura da sidebar quando aberta */
+  width: 320px;
+  /* Largura da sidebar quando aberta */
 }
 
 .sidebarClosed {
-  width: 80px; /* Largura da sidebar quando fechada */
+  width: 80px;
+  /* Largura da sidebar quando fechada */
 }
 
 /* Efeito de "vidro fosco" para os painéis */
@@ -35,11 +41,13 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Esconde o conteúdo que transborda durante a animação */
+  overflow: hidden;
+  /* Esconde o conteúdo que transborda durante a animação */
 }
 
 .chatWindow {
-  flex-grow: 1; /* Faz a janela do chat ocupar todo o espaço restante */
+  flex-grow: 1;
+  /* Faz a janela do chat ocupar todo o espaço restante */
 }
 
 /* --- Barra Lateral (Sidebar) --- */
@@ -75,7 +83,8 @@
 
 .subjectItem {
   padding: 0.75rem 1rem;
-  white-space: nowrap; /* Impede que o texto quebre em duas linhas */
+  white-space: nowrap;
+  /* Impede que o texto quebre em duas linhas */
   border-radius: 0.5rem;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -85,21 +94,84 @@
   gap: 0.75rem;
 }
 
-.subjectItem:hover, .subjectItem.active {
+.subjectItem:hover,
+.subjectItem.active {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* O resto dos estilos (janela do chat, bolhas, input) permanece o mesmo */
-.messageList { flex-grow: 1; padding: 1.5rem; overflow-y: auto; }
-.messageBubble { display: flex; align-items: flex-end; gap: 0.75rem; margin-bottom: 1rem; max-width: 75%; }
-.messageBubble.user { margin-left: auto; flex-direction: row-reverse; }
-.avatar { width: 32px; height: 32px; border-radius: 50%; background-color: #3b82f6; flex-shrink: 0; }
-.messageContent { padding: 0.75rem 1rem; border-radius: 1rem; color: #e5e7eb; }
-.messageBubble.user .messageContent { background-color: #2563eb; color: white; border-bottom-right-radius: 0.25rem; }
-.messageBubble.ai .messageContent { background-color: rgba(255, 255, 255, 0.15); border-bottom-left-radius: 0.25rem; }
-.inputArea { padding: 1rem 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1); }
-.inputGroup { background: rgba(0, 0, 0, 0.2); border-radius: 0.75rem; padding: 0.5rem; }
-.chatInput { background: transparent; border: none; color: white; outline: none; box-shadow: none; }
-.chatInput::placeholder { color: #9ca3af; }
-.sendButton { background: #2563eb; border-radius: 0.5rem; }
-.sendButton:hover { background: #1d4ed8; }
+.messageList {
+  flex-grow: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.messageBubble {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  max-width: 75%;
+}
+
+.messageBubble.user {
+  margin-left: auto;
+  flex-direction: row-reverse;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.messageContent {
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  color: #e5e7eb;
+}
+
+.messageBubble.user .messageContent {
+  background-color: #2563eb;
+  color: white;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.messageBubble.ai .messageContent {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-bottom-left-radius: 0.25rem;
+}
+
+.inputArea {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.inputGroup {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.75rem;
+  padding: 0.5rem;
+}
+
+.chatInput {
+  background: transparent;
+  border: none;
+  color: white;
+  outline: none;
+  box-shadow: none;
+}
+
+.chatInput::placeholder {
+  color: #9ca3af;
+}
+
+.sendButton {
+  background: #2563eb;
+  border-radius: 0.5rem;
+}
+
+.sendButton:hover {
+  background: #1d4ed8;
+}

@@ -97,7 +97,7 @@ body::-webkit-scrollbar-corner {
 
 /* O "cartão" que contém o formulário */
 .outer-form-section {
-    background-color: white;
+    background-color: rgb(255, 255, 255);
     /* Fundo branco para o cartão */
     padding: 40px;
     border-radius: 12px;
@@ -118,7 +118,7 @@ body::-webkit-scrollbar-corner {
 
 /* Título principal */
 .outer-form-section h2 {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     color: #333333;
     font-size: 1.8em;
     font-weight: 600;
