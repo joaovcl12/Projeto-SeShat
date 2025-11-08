@@ -99,7 +99,7 @@
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* O resto dos estilos (janela do chat, bolhas, input) permanece o mesmo */
+/* --- Janela de Chat e Mensagens --- */
 .messageList {
   flex-grow: 1;
   padding: 1.5rem;
@@ -174,4 +174,37 @@
 
 .sendButton:hover {
   background: #1d4ed8;
+}
+
+/* --- Media Query para Mobile (Telas pequenas) --- */
+@media (max-width: 768px) {
+  .chatPageContainer {
+    padding: 0.5rem;
+    gap: 0;
+  }
+
+  /* Oculta completamente a Sidebar no mobile */
+  .sidebarContainer {
+    display: none;
+  }
+
+  /* Faz a janela do chat ocupar todo o espaço disponível */
+  .chatWindow {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Ajusta padding da lista de mensagens e input */
+  .messageList {
+    padding: 1rem 0.75rem;
+  }
+
+  .inputArea {
+    padding: 0.75rem;
+  }
+
+  /* Aumenta o tamanho máximo da bolha de mensagem para aproveitar melhor a tela */
+  .messageBubble {
+    max-width: 95%;
+  }
 }
