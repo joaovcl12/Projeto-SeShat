@@ -59,7 +59,7 @@ const LoginRegister: React.FC = () => {
                 <div className="form-section">
                     {/* Título principal */}
                     <h2>
-                        {isLogin ? "Primeiro, vamos acessar sua conta!" : "Criar Conta"}
+                        {isLogin ? "Primeiro vamos acessar sua conta!" : "Registre sua conta!"}
                     </h2>
 
                     {/* Formulário controlado */}

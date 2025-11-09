@@ -33,7 +33,7 @@ function App() {
 
   // O componente Footer permanece o mesmo
   const Footer = () => (
-    <footer className="py-5 mt-auto border-top border-white border-opacity-10">
+    <footer className="py-5 mt-auto">
       <div className="container text-center text-white-50">
         <p>&copy; {new Date().getFullYear()} Projeto SeShat.</p>
       </div>
