@@ -498,7 +498,7 @@ export function ChatPage() {
       setChatHistory(prev => [
         ...prev.filter(item => 
           !('type' in item && item.type === 'schedule') &&
-          !(item.sender === 'ai' && (item.text === 'Buscando seu cronograma...' || item.text.startsWith('Adicionando') || item.text.startsWith('Deletando')))
+          !('sender' in item && item.sender === 'ai' && (item.text === 'Buscando seu cronograma...' || item.text.startsWith('Adicionando') || item.text.startsWith('Deletando')))
         ),
         { ...cronogramaData, type: 'schedule', id: cronogramaData.id }
       ]);
