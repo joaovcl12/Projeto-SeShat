@@ -21,7 +21,7 @@ export function HomePage() {
           mode: 'cors',
           headers: { 'Accept': 'application/json' }
         });
-      } catch { //catch
+      } catch { //catch hehe
       }
     };
 
