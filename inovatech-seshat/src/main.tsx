@@ -1,4 +1,3 @@
-// src/main.tsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
@@ -11,18 +10,16 @@ import LoginRegister from "./pages/LoginRegister.tsx";
 import './index.css';
 
 const router = createBrowserRouter([
-  // Rota de Login/Registro (tela cheia, sem o layout principal)
   {
     path: '/login',
     element: <LoginRegister />,
   },
-  // Rotas principais do app (com o layout principal <App>)
   {
     path: '/',
-    element: <App />, 
+    element: <App />,
     children: [
       {
-        index: true, 
+        index: true,
         element: <HomePage />,
       },
       {

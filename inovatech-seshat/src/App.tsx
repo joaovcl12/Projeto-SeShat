@@ -1,29 +1,39 @@
-// src/App.tsx
-
-// 1. Agora também importamos o 'Link' junto com 'Outlet' e 'useLocation'
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import './App.css';
 
+const getAuthToken = (): string | null => {
+  return localStorage.getItem('authToken');
+};
+
 function App() {
-  // A lógica do 'location' que já tínhamos continua aqui
   const location = useLocation();
 
-  // O componente Header agora será um pouco mais inteligente
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    if (getAuthToken()) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []);
+
+  const targetPath = isLoggedIn ? "/chat" : "/login";
+
   const Header = () => (
     <header className="navbar navbar-expand-lg sticky-top header-translucent shadow-sm">
       <nav className="container justify-content-between">
-        {/* 2. Trocamos a tag 'a' pelo componente 'Link' do React Router.
-            A propriedade 'href' vira 'to'. */}
+
         <Link className="navbar-brand fs-4 fw-bold text-white" to="/">
           Projeto SeShat - <span className="text-white">IAra</span>
         </Link>
 
-        {/* 3. Adicionamos a mesma condição do rodapé aqui:
-            O botão SÓ será renderizado SE o caminho da URL (location.pathname)
-            for DIFERENTE de '/chat'.
-        */}
         {location.pathname !== '/chat' && (
-          <Link to="/chat" className="access-btn btn btn-primary fw-bold">
+          <Link
+            to={targetPath}
+            className="access-btn btn btn-primary fw-bold"
+          >
             Acessar Chat
           </Link>
         )}
@@ -31,7 +41,6 @@ function App() {
     </header>
   );
 
-  // O componente Footer permanece o mesmo
   const Footer = () => (
     <footer className="py-5 mt-auto">
       <div className="container text-center text-white-50">

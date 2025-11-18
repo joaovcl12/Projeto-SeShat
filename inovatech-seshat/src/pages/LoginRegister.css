@@ -1,53 +1,32 @@
 body {
     background-color: #070e24 !important;
-    /* Azul escuro para o fundo subaquático */
     color: #d1d5db;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Define a largura da barra de rolagem (geralmente 8px a 12px é um bom tamanho) */
 body::-webkit-scrollbar {
     width: 10px;
-    /* Largura para a barra vertical */
     height: 10px;
-    /* Altura para a barra horizontal */
 }
 
-/* Estiliza o "caminho" (track) por onde a barra desliza.
- * - Cor: Um tom bem escuro para se misturar ao fundo 'body'.
- * - Opacidade: Suave.
- */
 body::-webkit-scrollbar-track {
     background: #070e24;
-    /* Um preto muito sutil para o fundo da barra */
     border-radius: 10px;
 }
 
-/* Estiliza o "polegar" (thumb) - a parte que o usuário arrasta.
- * - Cor: Um azul sutil (como se fosse luz refletida na água) que combina com o tema.
- * - Arredondamento: Deixa as pontas da barra arredondadas.
- * - Transição: Adiciona um efeito suave ao passar o mouse.
- */
 body::-webkit-scrollbar-thumb {
     background-color: #00254d;
-    /* Azul primário, sutil no fundo escuro */
     border-radius: 10px;
-    /* Deixa o polegar arredondado */
     border: 2px solid transparent;
-    /* Adiciona uma borda transparente para dar um pequeno 'padding' visual dentro do track */
     background-clip: content-box;
-    /* Garante que o background (cor do thumb) fique dentro da borda invisível */
     transition: background-color 0.3s ease;
 }
 
-/* Estiliza o polegar quando o mouse passa por cima (hover). */
 body::-webkit-scrollbar-thumb:hover {
     background-color: #61b0fb46;
-    /* Um azul mais claro para o hover, como destaque de luz */
 }
 
-/* Estiliza o canto (corner) onde as barras vertical e horizontal se encontram. */
 body::-webkit-scrollbar-corner {
     background: transparent;
 }
@@ -56,11 +35,8 @@ body::-webkit-scrollbar-corner {
     position: relative;
     overflow: hidden;
     text-align: center;
-    /* Gradiente linear para simular profundidade da água */
     background: linear-gradient(180deg, #005d92 0%, #001e4e 100%);
-    /* Reduzimos o padding vertical para compensar a imagem ao lado */
     padding: 3rem 0 8rem;
-    /*padding: (top) (left/right) (bottom)*/
     border-bottom: none;
     box-shadow: inset 0 60px 100px -30px rgba(46, 161, 255, 0.1),
         inset 0 -60px 100px -30px rgba(0, 0, 0, 0.5);
@@ -73,50 +49,36 @@ body::-webkit-scrollbar-corner {
     left: 0;
     width: 100%;
     height: 150px;
-    /* Altura da base subaquática */
-    /* SVG com ondulações mais presentes, mas ainda suaves */
     background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 150" preserveAspectRatio="none"><path d="M0,100 C180,140 320,60 500,100 C680,140 820,60 1000,100 L1000,150 L0,150 Z" fill="%23070e24"></path></svg>') no-repeat bottom center;
-    /* Fundo ondulado com mais curvas */
     background-size: cover;
     z-index: 0;
     opacity: 1;
 }
 
-/* A classe general-section está na <main>.
-   Ela é usada aqui para centralizar o conteúdo verticalmente. */
 .general-section {
     min-height: 100vh;
-    /* Ocupa a altura total da viewport */
     display: flex;
     justify-content: center;
-    /* Centraliza horizontalmente o .outer-form-section */
     align-items: center;
-    /* Fundo claro para o corpo da página */
     padding: 20px;
 }
 
-/* O "cartão" que contém o formulário */
 .outer-form-section {
     background-color: #070e24;
-    /* Fundo branco para o cartão */
     padding: 40px;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     width: 100%;
     max-width: 400px;
-    /* Largura máxima para manter o formulário compacto */
 }
 
-/* Container do formulário em si */
 .form-section {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    /* Espaço entre os elementos do formulário */
     width: 100%;
 }
 
-/* Título principal */
 .outer-form-section h2 {
     margin-bottom: 20px;
     color: white;
@@ -124,18 +86,12 @@ body::-webkit-scrollbar-corner {
     font-weight: 600;
 }
 
-/* ----------------------------------------------------
- * Estilos dos Campos do Formulário
- * ---------------------------------------------------- */
-
-/* Estilo para as divs que envolvem label e input */
 .form-section>div {
     display: flex;
     flex-direction: column;
     width: 100%;
 }
 
-/* Estilo para os labels */
 .form-section label {
     text-align: left;
     margin-bottom: 5px;
@@ -143,7 +99,6 @@ body::-webkit-scrollbar-corner {
     color: white;
 }
 
-/* Estilo para os inputs (text, email, password) */
 .form-section input {
     padding: 10px 15px;
     border: 1px solid #cccccc;
@@ -160,14 +115,8 @@ body::-webkit-scrollbar-corner {
     color: black;
 }
 
-/* ----------------------------------------------------
- * Estilos dos Botões e Links
- * ---------------------------------------------------- */
-
-/* Botão principal (Entrar / Registrar) */
 .submit-button {
     background-color: #007bff;
-    /* Cor primária */
     color: white;
     padding: 12px 20px;
     border: none;
@@ -181,22 +130,18 @@ body::-webkit-scrollbar-corner {
 
 .submit-button:hover {
     background-color: #0056b3;
-    /* Cor mais escura ao passar o mouse */
 }
 
 .submit-button:active {
     transform: translateY(1px);
-    /* Efeito de clique */
 }
 
-/* Estilo do parágrafo de alternância (Já tem conta? / Crie uma) */
 .outer-form-section p {
     margin-top: 20px;
     font-size: 0.95em;
     color: white;
 }
 
-/* Botão de alternância de modo (Crie uma / Entrar) */
 .outer-form-section p button {
     background: none;
     border: none;
@@ -214,21 +159,17 @@ body::-webkit-scrollbar-corner {
     color: #49a1ff;
 }
 
-/* Seção do botão de Convidado */
 .guest-button-section {
     margin-top: 15px;
     padding-top: 15px;
 }
 
-/* Botão/Link para Entrar como Convidado */
 .guest-button {
-    /* Cor secundária/cinza */
     background-color: #003d7e98;
     color: #419dff;
     padding: 10px 20px;
     border-radius: 6px;
     text-decoration: none;
-    /* Remove sublinhado padrão do link */
     font-size: 1em;
     font-weight: 500;
     transition: background-color 0.3s;
