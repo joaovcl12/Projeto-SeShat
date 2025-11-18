@@ -21,7 +21,8 @@ export function HomePage() {
           mode: 'cors',
           headers: { 'Accept': 'application/json' }
         });
-      } catch (error) { }
+      } catch { //catch
+      }
     };
 
     warmUpApi();
