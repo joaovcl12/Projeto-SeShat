@@ -1,32 +1,53 @@
 // src/pages/HomePage.tsx
 
-// Importamos o componente 'Link' do React Router.
-// Ele nos permite criar links de navegação que trocam de página sem recarregar o site inteiro.
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-// Importamos nosso CSS customizado para aplicar os estilos que o Bootstrap não cobre.
-// O '../' é necessário para "subir" um nível de pasta, de 'pages' para 'src'.
 import '../App.css';
 
-// Este é o componente principal da Homepage.
-export function HomePage() {
-  return (
-    // Usamos um Fragmento (<>) para agrupar os elementos sem adicionar uma div extra.
-    <>
-      {/* O <header> foi removido daqui porque agora ele vive no layout principal (App.tsx) */}
+const API_URL = "https://seshat-api-m30w.onrender.com";
 
-      {/* Seção Principal (Hero) com as nossas classes customizadas de estilo e animação. */}
+const getAuthToken = (): string | null => {
+  return localStorage.getItem('authToken');
+};
+
+export function HomePage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const warmUpApi = async () => {
+      try {
+        await fetch(API_URL, {
+          method: 'GET',
+          mode: 'cors',
+          headers: { 'Accept': 'application/json' }
+        });
+      } catch (error) { }
+    };
+
+    warmUpApi();
+  }, []);
+
+  useEffect(() => {
+    if (getAuthToken()) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []);
+
+  const targetPath = isLoggedIn ? "/chat" : "/login";
+
+  return (
+    <>
       <main className="hero-section text-center">
-        {/* NOVO: Usamos container e d-flex para habilitar o layout lado a lado */}
         <div className="container hero-content-wrapper d-flex flex-column flex-md-row align-items-center justify-content-center">
 
-          {/* A imagem agora está dentro do novo wrapper e tem uma classe para estilização */}
           <img
             src='/iara2.png'
             alt='Mascote Iara'
             className='iara-img'
           />
 
-          {/* O container de texto foi substituído por uma div para ser um par flexbox */}
           <div className="text-content" style={{ position: 'relative', zIndex: 1 }}>
             <h1 className="display-3 fw-bolder gradient-text fade-in-up text-md-start">
               Revolucione seus Estudos com Inteligência Artificial
@@ -35,9 +56,8 @@ export function HomePage() {
               A IAra é sua mentora de estudos particular, projetada para impulsionar sua aprovação nos vestibulares e concursos mais importantes da Região Norte.
             </p>
             <div className="mt-5 fade-in-up text-md-start" style={{ animationDelay: '0.4s' }}>
-              {/* O componente Link do React Router usa a propriedade 'to' para definir o destino. */}
               <Link
-                to="/login"
+                to={targetPath}
                 className="btn btn-success btn-lg fw-bold px-5 py-3 rounded-pill shadow"
               >
                 Vamos começar!
@@ -47,14 +67,11 @@ export function HomePage() {
         </div>
       </main>
 
-      {/* Seção de Funcionalidades */}
       <section className="container py-5 mt-5">
         <h2 className="text-center fw-bolder display-5 mb-5 text-white">
           Ferramentas para sua Aprovação
         </h2>
-        {/* Sistema de Grid do Bootstrap: 'row' cria uma linha, 'g-4' adiciona espaçamento (gap). */}
         <div className="row g-4">
-          {/* Cada 'col-md-4' cria uma coluna que ocupa 1/3 da largura em telas médias ou maiores. */}
           <div className="col-md-4">
             <div className="card feature-card h-100 p-3 text-white">
               <div className="card-body">
@@ -81,11 +98,8 @@ export function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* O <footer> também foi removido daqui porque agora vive no App.tsx */}
     </>
   );
 }
 
-// Usamos 'export default' para que este componente possa ser importado facilmente no 'main.tsx'.
 export default HomePage;

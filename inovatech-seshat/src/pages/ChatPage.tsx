@@ -1,6 +1,6 @@
 // src/pages/ChatPage.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './ChatPage.module.css';
 
 const API_URL = "https://seshat-api-m30w.onrender.com";
@@ -9,7 +9,6 @@ const getAuthToken = (): string | null => {
   return localStorage.getItem('authToken');
 };
 
-// --- Tipos ---
 type Message = { id: number; text: string; sender: 'user' | 'ai'; disabled?: boolean; };
 type MateriasResponse = { materias_disponiveis: string[]; };
 type Question = {
@@ -44,18 +43,17 @@ type Cronograma = {
 };
 type WeeklyScheduleResponse = { [dia: string]: string; } | { detalhe: string };
 type WeeklySchedule = {
-  plan: WeeklyScheduleResponse; 
+  plan: WeeklyScheduleResponse;
 };
-type ChatItem = 
-  | Message 
+type ChatItem =
+  | Message
   | (Question & { type: 'question' })
   | { type: 'action_menu'; id: number; disabled?: boolean; }
-  | (Cronograma & { type: 'schedule' }) 
+  | (Cronograma & { type: 'schedule' })
   | (WeeklySchedule & { type: 'weekly_schedule'; id: number });
 
-// --- Componentes de Ajuda (Completos) ---
 
-const AiAvatar = () => ( <div className={`${styles.avatar} d-flex align-items-center justify-content-center`}><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" className="bi bi-robot" viewBox="0 0 16 16"><path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5ZM3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.58 26.58 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.933.933 0 0 1-.765.935c-.845.147-2.34.346-4.235.346-1.895 0-3.39-.2-4.235-.346A.933.933 0 0 1 3 9.219V8.062Zm4.542-.827a.25.25 0 0 0-.217.068l-.92.9a24.767 24.767 0 0 1-1.871-.183.25.25 0 0 0-.068.217l.22.92a.25.25 0 0 0 .217.217c.134.04.27.082.412.126l.22.92a.25.25 0 0 0 .217.217c.134.04.27.082.412.126l.22.92a.25.25 0 0 0 .217.217c.134.04.27.082.412.126l.22.92a.25.25 0 0 0 .217.217c.134.04.27.082.412.126l.92.22a.25.25 0 0 0 .217-.068l.92-.9a.25.25 0 0 0 .068-.217l-.22-.92a.25.25 0 0 0-.217-.217c-.134-.04-.27-.082-.412.126l-.22-.92a.25.25 0 0 0-.217-.217c-.134-.04-.27-.082-.412.126l-.22-.92a.25.25 0 0 0-.217-.217c-.134-.04-.27-.082-.412.126l-.92-.22a.25.25 0 0 0-.217.068Z"/><path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1Zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5Z"/></svg></div>);
+const AiAvatar = () => (<div className={`${styles.avatar} d-flex align-items-center justify-content-center`}><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" className="bi bi-robot" viewBox="0 0 16 16"><path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5ZM3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.58 26.58 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.933.933 0 0 1-.765.935c-.845.147-2.34.346-4.235.346-1.895 0-3.39-.2-4.235-.346A.933.933 0 0 1 3 9.219V8.062Zm4.542-.827a.25.25 0 0 0-.217.068l-.92.9a24.767 24.767 0 0 1-1.871-.183.25.25 0 0 0-.068.217l.22.92a.25.25 0 0 0 .217.217c.134.04.27.082.412.126l.22.92a.25.25 0 0 0 .217.217c.134.04.27.082.412.126l.22.92a.25.25 0 0 0 .217.217c.134.04.27.082.412.126l.22.92a.25.25 0 0 0 .217.217c.134.04.27.082.412.126l.92.22a.25.25 0 0 0 .217-.068l.92-.9a.25.25 0 0 0 .068-.217l-.22-.92a.25.25 0 0 0-.217-.217c-.134-.04-.27-.082-.412.126l-.22-.92a.25.25 0 0 0-.217-.217c-.134-.04-.27-.082-.412.126l-.22-.92a.25.25 0 0 0-.217-.217c-.134-.04-.27-.082-.412.126l-.92-.22a.25.25 0 0 0-.217.068Z" /><path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1Zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5Z" /></svg></div>);
 
 const Sidebar = ({ isOpen, onToggle, activeSubject, onSubjectClick, subjects }: {
   isOpen: boolean;
@@ -81,15 +79,15 @@ const Sidebar = ({ isOpen, onToggle, activeSubject, onSubjectClick, subjects }: 
         {subjects.length === 0 && <li className="text-white-50 p-3">Carregando matérias...</li>}
       </ul>
     )}
-     {!isOpen && (
-       <ul className={styles.sidebarList} style={{ paddingTop: '2rem' }}>
-         {subjects.map((subject) => (
-           <li key={subject + '-icon'} title={subject} className={`${styles.subjectItem} ${subject === activeSubject ? styles.active : ''} justify-content-center`} onClick={() => onSubjectClick(subject)}>
-             <span className='fs-5'>{subject.charAt(0)}</span>
-           </li>
-         ))}
-       </ul>
-     )}
+    {!isOpen && (
+      <ul className={styles.sidebarList} style={{ paddingTop: '2rem' }}>
+        {subjects.map((subject) => (
+          <li key={subject + '-icon'} title={subject} className={`${styles.subjectItem} ${subject === activeSubject ? styles.active : ''} justify-content-center`} onClick={() => onSubjectClick(subject)}>
+            <span className='fs-5'>{subject.charAt(0)}</span>
+          </li>
+        ))}
+      </ul>
+    )}
   </div>
 );
 
@@ -102,10 +100,10 @@ const ChatMessage = ({ msg }: { msg: Message }) => (
   </div>
 );
 
-const QuestionDisplay = ({ question, onAnswerSelect, isLast }: { 
-  question: Question; 
-  onAnswerSelect: (optionKey: string) => void; 
-  isLast: boolean; 
+const QuestionDisplay = ({ question, onAnswerSelect, isLast }: {
+  question: Question;
+  onAnswerSelect: (optionKey: string) => void;
+  isLast: boolean;
 }) => {
   const optionsArray = Array.isArray(question.options)
     ? question.options.map((text, index) => ({ key: String(index), text }))
@@ -126,8 +124,8 @@ const QuestionDisplay = ({ question, onAnswerSelect, isLast }: {
         <p style={{ whiteSpace: 'pre-wrap' }}>{question.text}</p>
         <div className="d-grid gap-2 mt-3">
           {optionsArray.map(({ key, text }) => (
-            <button 
-              key={key} 
+            <button
+              key={key}
               className="btn btn-outline-light text-start"
               onClick={() => onAnswerSelect(key)}
               disabled={isAnsweredOrOld}
@@ -141,7 +139,7 @@ const QuestionDisplay = ({ question, onAnswerSelect, isLast }: {
   );
 };
 
-const ActionMenu = ({ onActionClick, isLast }: { 
+const ActionMenu = ({ onActionClick, isLast }: {
   onActionClick: (action: 'get_questions' | 'edit_schedule' | 'get_weekly_schedule') => void;
   isLast: boolean;
 }) => (
@@ -164,9 +162,9 @@ const ActionMenu = ({ onActionClick, isLast }: {
   </div>
 );
 
-const AddTopicForm = ({ materiaId, onAddTopic }: { 
-  materiaId: number, 
-  onAddTopic: (materiaId: number, topicName: string) => void 
+const AddTopicForm = ({ materiaId, onAddTopic }: {
+  materiaId: number,
+  onAddTopic: (materiaId: number, topicName: string) => void
 }) => {
   const [topicName, setTopicName] = useState("");
   const handleSubmit = (e: React.FormEvent) => {
@@ -177,12 +175,12 @@ const AddTopicForm = ({ materiaId, onAddTopic }: {
   };
   return (
     <form onSubmit={handleSubmit} className="d-flex gap-2 mt-2">
-      <input 
-        type="text" 
-        className="form-control form-control-sm" 
-        placeholder="Novo tópico (max 3)..." 
+      <input
+        type="text"
+        className="form-control form-control-sm"
+        placeholder="Novo tópico (max 3)..."
         value={topicName}
-        onChange={(e) => setTopicName(e.target.value)}
+        onChange={(e) => e.target.value.length <= 50 && setTopicName(e.target.value)}
         required
       />
       <button type="submit" className="btn btn-outline-light btn-sm">Add</button>
@@ -190,8 +188,8 @@ const AddTopicForm = ({ materiaId, onAddTopic }: {
   );
 };
 
-const AddSubjectForm = ({ onAddSubject }: { 
-  onAddSubject: (subjectName: string) => void 
+const AddSubjectForm = ({ onAddSubject }: {
+  onAddSubject: (subjectName: string) => void
 }) => {
   const [subjectName, setSubjectName] = useState("");
   const handleSubmit = (e: React.FormEvent) => {
@@ -202,12 +200,12 @@ const AddSubjectForm = ({ onAddSubject }: {
   };
   return (
     <form onSubmit={handleSubmit} className="d-flex gap-2 mt-3 pt-3 border-top border-white border-opacity-10">
-      <input 
-        type="text" 
-        className="form-control form-control-sm" 
-        placeholder="Nova matéria (max 3)..." 
+      <input
+        type="text"
+        className="form-control form-control-sm"
+        placeholder="Nova matéria (max 3)..."
         value={subjectName}
-        onChange={(e) => setSubjectName(e.target.value)}
+        onChange={(e) => e.target.value.length <= 50 && setSubjectName(e.target.value)}
         required
       />
       <button type="submit" className="btn btn-primary btn-sm">Adicionar</button>
@@ -215,8 +213,7 @@ const AddSubjectForm = ({ onAddSubject }: {
   );
 };
 
-// Componente para exibir o "Armário" de Cronograma (interativo)
-const ScheduleDisplay = ({ schedule, onAddSubject, onAddTopic, onDeleteSubject, onDeleteTopic }: { 
+const ScheduleDisplay = ({ schedule, onAddSubject, onAddTopic, onDeleteSubject, onDeleteTopic }: {
   schedule: Cronograma;
   onAddSubject: (subjectName: string) => void;
   onAddTopic: (materiaId: number, topicName: string) => void;
@@ -227,13 +224,13 @@ const ScheduleDisplay = ({ schedule, onAddSubject, onAddTopic, onDeleteSubject, 
     <AiAvatar />
     <div className={styles.messageContent}>
       <h5 className="text-white mb-3">{schedule.nome}</h5>
-      {schedule.materias.length === 0 ? ( <p className="text-white-50">Seu cronograma está vazio.</p> ) : (
+      {schedule.materias.length === 0 ? (<p className="text-white-50">Seu cronograma está vazio.</p>) : (
         schedule.materias.map(materia => (
           <div key={materia.id} className="mb-3 p-2 rounded" style={{ background: 'rgba(0,0,0,0.2)' }}>
             <div className="d-flex justify-content-between align-items-center">
               <h6 className="fw-bold mb-0">{materia.nome}</h6>
               <button className="btn btn-sm btn-danger py-0 px-1" onClick={() => onDeleteSubject(materia.id)} title="Deletar matéria">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-x-lg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-x-lg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" /></svg>
               </button>
             </div>
             {materia.topicos.length > 0 ? (
@@ -242,18 +239,18 @@ const ScheduleDisplay = ({ schedule, onAddSubject, onAddTopic, onDeleteSubject, 
                   <li key={topico.id} className="d-flex justify-content-between align-items-center">
                     <span>{topico.concluido ? '✅' : '◻️'} {topico.nome}</span>
                     <button className="btn btn-sm btn-outline-danger py-0 px-1" onClick={() => onDeleteTopic(topico.id)} title="Deletar tópico">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" className="bi bi-x" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" className="bi bi-x" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" /></svg>
                     </button>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-white-50 ps-3" style={{fontSize: '0.9rem'}}>- Sem tópicos definidos</p>
+              <p className="text-white-50 ps-3" style={{ fontSize: '0.9rem' }}>- Sem tópicos definidos</p>
             )}
             {materia.topicos.length < 3 ? (
               <AddTopicForm materiaId={materia.id} onAddTopic={onAddTopic} />
             ) : (
-              <p className="text-white-50 ps-3" style={{fontSize: '0.8rem'}}>Limite de 3 tópicos atingido.</p>
+              <p className="text-white-50 ps-3" style={{ fontSize: '0.8rem' }}>Limite de 3 tópicos atingido.</p>
             )}
           </div>
         ))
@@ -261,7 +258,7 @@ const ScheduleDisplay = ({ schedule, onAddSubject, onAddTopic, onDeleteSubject, 
       {schedule.materias.length < 3 ? (
         <AddSubjectForm onAddSubject={onAddSubject} />
       ) : (
-        <p className="text-white-50 mt-3 pt-3 border-top border-white border-opacity-10" style={{fontSize: '0.8rem'}}>
+        <p className="text-white-50 mt-3 pt-3 border-top border-white border-opacity-10" style={{ fontSize: '0.8rem' }}>
           Limite de 3 matérias atingido.
         </p>
       )}
@@ -269,9 +266,8 @@ const ScheduleDisplay = ({ schedule, onAddSubject, onAddTopic, onDeleteSubject, 
   </div>
 );
 
-// Componente para exibir o Cronograma Semanal (a Tabela)
 const WeeklyScheduleDisplay = ({ schedule }: { schedule: WeeklySchedule & { type: 'weekly_schedule'; id: number } }) => {
-  
+
   if (!schedule.plan || 'detalhe' in schedule.plan) {
     return (
       <div className={`${styles.messageBubble} ${styles.ai}`}>
@@ -304,10 +300,7 @@ const WeeklyScheduleDisplay = ({ schedule }: { schedule: WeeklySchedule & { type
   );
 };
 
-
-// --- Componente Principal da Página ---
 export function ChatPage() {
-  // CORRIGIDO: Removida a função 'setIsMobileLayout' não utilizada
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [subjectsList, setSubjectsList] = useState<string[]>([]);
   const [activeSubject, setActiveSubject] = useState('');
@@ -319,16 +312,21 @@ export function ChatPage() {
 
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Efeito para PROTEGER A ROTA
   useEffect(() => {
-    if (!getAuthToken()) {
+    const params = new URLSearchParams(location.search);
+    const isGuest = params.get('guest') === 'true';
+
+    if (!getAuthToken() && !isGuest) {
       navigate('/login?message=Você precisa estar logado para acessar o chat.');
     }
-  }, [navigate]);
+  }, [navigate, location.search]);
 
-  // Efeito para buscar as matérias da API
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const isGuest = params.get('guest') === 'true';
+
     const fetchSubjects = async () => {
       try {
         const response = await fetch(`${API_URL}/materias`);
@@ -339,10 +337,10 @@ export function ChatPage() {
 
         if (availableSubjects.length > 0) {
           if (!isMobileLayout && !activeSubject && chatHistory.length === 0) {
-             const firstSubject = availableSubjects[0];
-             setActiveSubject(firstSubject);
-             setChatHistory([{ id: 1, text: `Olá! Sou a IAra. Vamos começar com ${firstSubject}. O que gostaria de fazer?`, sender: 'ai' }, { id: 2, type: 'action_menu' }]);
-         } else if (isMobileLayout && chatHistory.length === 0) { 
+            const firstSubject = availableSubjects[0];
+            setActiveSubject(firstSubject);
+            setChatHistory([{ id: 1, text: `Olá! Sou a IAra. Vamos começar com ${firstSubject}. O que gostaria de fazer?`, sender: 'ai' }, { id: 2, type: 'action_menu' }]);
+          } else if (isMobileLayout && chatHistory.length === 0) {
             setChatHistory([{
               id: 1,
               subject: "Matérias",
@@ -350,7 +348,7 @@ export function ChatPage() {
               options: availableSubjects,
               source: null,
               year: null,
-              type: 'question' 
+              type: 'question'
             }]);
             setActiveSubject('');
           }
@@ -365,29 +363,26 @@ export function ChatPage() {
         }
       }
     };
-    
-    if (getAuthToken()) {
+
+    if (getAuthToken() || isGuest) {
       fetchSubjects();
     }
-  }, [isMobileLayout, activeSubject, chatHistory.length, navigate]);
+  }, [isMobileLayout, activeSubject, chatHistory.length, navigate, location.search]);
 
-  // Rola para o fim das mensagens
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatHistory]);
 
-  // Função para enviar mensagem de texto
   const handleSendMessage = () => {
-    if (!inputValue.trim() || !activeSubject) return; 
+    if (!inputValue.trim() || !activeSubject) return;
     const userMessage: Message = { id: Date.now(), text: inputValue, sender: 'user' };
     setChatHistory(prev => [...prev, userMessage]);
     setInputValue('');
 
     setTimeout(() => {
       const aiResponse: Message = { id: Date.now() + 1, text: `Analisando sua pergunta sobre ${activeSubject}...`, sender: 'ai' };
-      setChatHistory(prev => [...prev, aiResponse]); 
+      setChatHistory(prev => [...prev, aiResponse]);
     }, 1200);
   };
 
-  // Função para exibir a próxima questão
   const showNextQuestion = () => {
     const nextIndex = currentQuestionIndex + 1;
     if (nextIndex < questionList.length) {
@@ -399,26 +394,22 @@ export function ChatPage() {
     } else {
       setChatHistory(prev => [
         ...prev,
-        { id: Date.now()+2, text: 'Você terminou todas as questões que eu busquei! O que gostaria de fazer agora?', sender: 'ai' },
-        { id: Date.now()+3, type: 'action_menu' }
+        { id: Date.now() + 2, text: 'Você terminou todas as questões que eu busquei! O que gostaria de fazer agora?', sender: 'ai' },
+        { id: Date.now() + 3, type: 'action_menu' }
       ]);
     }
   };
 
-  // Função para lidar com a seleção de resposta (Verificação de API)
   const handleAnswerSelect = async (selectedOptionKey: string) => {
     const lastItemIndex = chatHistory.length - 1;
-    // CORRIGIDO: de 'let' para 'const'
-    const lastItem = chatHistory[lastItemIndex]; 
+    const lastItem = chatHistory[lastItemIndex];
     if (!lastItem || (!('type' in lastItem) && !('sender' in lastItem))) return;
 
     const updatedHistory = [...chatHistory];
     const itemToDisable = { ...lastItem, disabled: true };
     updatedHistory[lastItemIndex] = itemToDisable as ChatItem;
     setChatHistory(updatedHistory);
-    // lastItem = itemToDisable; // Removido, pois 'lastItem' agora é const
-    
-    // 1. Lógica para Seleção de Matéria (Modo Mobile)
+
     if ('type' in lastItem && lastItem.type === 'question' && Array.isArray(lastItem.options) && lastItem.subject === "Matérias") {
       const selectedSubject = lastItem.options[parseInt(selectedOptionKey)];
       const userMessage: Message = { id: Date.now(), text: `Quero estudar: ${selectedSubject}`, sender: 'user' };
@@ -427,18 +418,21 @@ export function ChatPage() {
       return;
     }
 
-    // 2. Lógica para Resposta de Questão (Verificação)
     const currentQuestion = questionList[currentQuestionIndex];
-    if (!currentQuestion) return; 
+    if (!currentQuestion) return;
 
-    const answerText = Array.isArray(currentQuestion.options) 
-        ? currentQuestion.options[parseInt(selectedOptionKey)] 
-        : currentQuestion.options[selectedOptionKey];
+    const answerText = Array.isArray(currentQuestion.options)
+      ? currentQuestion.options[parseInt(selectedOptionKey)]
+      : currentQuestion.options[selectedOptionKey];
     const userMessage: Message = { id: Date.now(), text: `Minha resposta: ${selectedOptionKey}. ${answerText}`, sender: 'user' };
-    setChatHistory(prev => [ ...prev, userMessage, { id: Date.now()+1, text: `Resposta "${selectedOptionKey}" recebida. Verificando...`, sender: 'ai' } ]);
-    
+    setChatHistory(prev => [...prev, userMessage, { id: Date.now() + 1, text: `Resposta "${selectedOptionKey}" recebida. Verificando...`, sender: 'ai' }]);
+
     const token = getAuthToken();
-    if (!token) { setChatHistory(prev => [...prev, { id: Date.now()+2, text: 'Erro de autenticação. Por favor, faça login para verificar suas respostas.', sender: 'ai' }]); return; }
+    if (!token) {
+      setChatHistory(prev => [...prev, { id: Date.now() + 2, text: 'Você precisa estar logado para verificar as respostas de questões.', sender: 'ai' }]);
+      setTimeout(showNextQuestion, 2000);
+      return;
+    }
 
     try {
       const response = await fetch(`${API_URL}/perguntas/verificar`, {
@@ -450,71 +444,74 @@ export function ChatPage() {
       const result: AnswerCheckResponse = await response.json();
       let feedbackMessage: Message;
       if (result.is_correct) {
-        feedbackMessage = { id: Date.now()+2, text: 'Parabéns, resposta correta! 🎉', sender: 'ai' };
+        feedbackMessage = { id: Date.now() + 2, text: 'Parabéns, resposta correta! 🎉', sender: 'ai' };
       } else {
-        feedbackMessage = { id: Date.now()+2, text: `Incorreto. A resposta correta era: ${result.correct_answer}`, sender: 'ai' };
+        feedbackMessage = { id: Date.now() + 2, text: `Incorreto. A resposta correta era: ${result.correct_answer}`, sender: 'ai' };
       }
       setChatHistory(prev => [...prev, feedbackMessage]);
-      setTimeout(showNextQuestion, 2000); 
+      setTimeout(showNextQuestion, 2000);
     } catch (error: unknown) {
       console.error('Erro ao verificar resposta:', error);
-      if (error instanceof Error) { setChatHistory(prev => [...prev, { id: Date.now()+2, text: `Desculpe, tive um problema ao verificar sua resposta: ${error.message}`, sender: 'ai' }]);
-      } else { setChatHistory(prev => [...prev, { id: Date.now()+2, text: 'Desculpe, tive um problema desconhecido ao verificar sua resposta.', sender: 'ai' }]);}
+      if (error instanceof Error) {
+        setChatHistory(prev => [...prev, { id: Date.now() + 2, text: `Desculpe, tive um problema ao verificar sua resposta: ${error.message}`, sender: 'ai' }]);
+      } else { setChatHistory(prev => [...prev, { id: Date.now() + 2, text: 'Desculpe, tive um problema desconhecido ao verificar sua resposta.', sender: 'ai' }]); }
     }
   };
 
-  // Função para buscar as questões da API
   const fetchQuestions = async (subject: string) => {
-    setChatHistory(prev => [ ...prev, { id: Date.now(), text: `Certo! Buscando 10 questões de ${subject}...`, sender: 'ai' } ]);
+    const token = getAuthToken();
+    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: `Você precisa estar logado para acessar o banco de questões.`, sender: 'ai' }]); return; }
+
+    setChatHistory(prev => [...prev, { id: Date.now(), text: `Certo! Buscando 10 questões de ${subject}...`, sender: 'ai' }]);
     setQuestionList([]);
     setCurrentQuestionIndex(0);
     try {
       const response = await fetch(`${API_URL}/perguntas/${subject}?count=10`);
       if (!response.ok) {
-        if (response.status === 404) { setChatHistory(prev => [...prev, { id: Date.now()+1, text: `Desculpe, ainda não tenho questões de ${subject} no banco de dados.`, sender: 'ai' }]); return; }
+        if (response.status === 404) { setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Desculpe, ainda não tenho questões de ${subject} no banco de dados.`, sender: 'ai' }]); return; }
         throw new Error(`Erro HTTP: ${response.status}`);
       }
       const data: Question[] = await response.json();
-      if (data.length === 0) { setChatHistory(prev => [...prev, { id: Date.now()+1, text: `Desculpe, não encontrei nenhuma questão de ${subject} no banco de dados.`, sender: 'ai' }]); return; }
+      if (data.length === 0) { setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Desculpe, não encontrei nenhuma questão de ${subject} no banco de dados.`, sender: 'ai' }]); return; }
       setQuestionList(data);
       setCurrentQuestionIndex(0);
-      setChatHistory(prev => [ ...prev, { id: Date.now()+1, text: `Encontrei ${data.length} questões. Vamos começar!`, sender: 'ai' }, { ...data[0], type: 'question' } ]);
+      setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Encontrei ${data.length} questões. Vamos começar!`, sender: 'ai' }, { ...data[0], type: 'question' }]);
     } catch (error: unknown) {
       console.error("Erro ao buscar questões:", error);
-      if (error instanceof Error) { setChatHistory(prev => [...prev, { id: Date.now()+1, text: `Desculpe, tive um problema ao buscar as questões: ${error.message}`, sender: 'ai' }]);
-      } else { setChatHistory(prev => [...prev, { id: Date.now()+1, text: 'Desculpe, tive um problema desconhecido ao buscar as questões.', sender: 'ai' }]);}
+      if (error instanceof Error) {
+        setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Desculpe, tive um problema ao buscar as questões: ${error.message}`, sender: 'ai' }]);
+      } else { setChatHistory(prev => [...prev, { id: Date.now() + 1, text: 'Desculpe, tive um problema desconhecido ao buscar as questões.', sender: 'ai' }]); }
     }
   };
 
-  // Função para ATUALIZAR a exibição do cronograma
   const refreshSchedule = async (showLoadingMsg: boolean = true) => {
     const token = getAuthToken();
-    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação. Por favor, faça login.', sender: 'ai' }]); return; }
+    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação. Por favor, faça login para editar o cronograma.', sender: 'ai' }]); return; }
     if (showLoadingMsg) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Buscando seu cronograma...', sender: 'ai' }]); }
     try {
       const response = await fetch(`${API_URL}/cronograma/me`, { headers: { 'Authorization': `Bearer ${token}` } });
       if (!response.ok) throw new Error('Não foi possível buscar o cronograma.');
       const cronogramaData: Cronograma = await response.json();
       setChatHistory(prev => [
-        ...prev.filter(item => 
+        ...prev.filter(item =>
           !('type' in item && item.type === 'schedule') &&
           !('sender' in item && item.sender === 'ai' && (item.text === 'Buscando seu cronograma...' || item.text.startsWith('Adicionando') || item.text.startsWith('Deletando')))
         ),
         { ...cronogramaData, type: 'schedule', id: cronogramaData.id }
       ]);
     } catch (error: unknown) {
-       console.error('Erro ao buscar cronograma:', error);
-       if (error instanceof Error) { setChatHistory(prev => [...prev, { id: Date.now()+1, text: `Desculpe, tive um problema ao atualizar seu cronograma: ${error.message}`, sender: 'ai' }]);
-       } else { setChatHistory(prev => [...prev, { id: Date.now()+1, text: 'Desculpe, tive um problema desconhecido ao atualizar seu cronograma.', sender: 'ai' }]);}
+      console.error('Erro ao buscar cronograma:', error);
+      if (error instanceof Error) {
+        setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Desculpe, tive um problema ao atualizar seu cronograma: ${error.message}`, sender: 'ai' }]);
+      } else { setChatHistory(prev => [...prev, { id: Date.now() + 1, text: 'Desculpe, tive um problema desconhecido ao atualizar seu cronograma.', sender: 'ai' }]); }
     }
   };
 
-  // Função para ADICIONAR UMA MATÉRIA
   const handleAddNewSubject = async (subjectName: string) => {
     if (!subjectName.trim()) return;
     const token = getAuthToken();
-    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação. Por favor, faça login.', sender: 'ai' }]); return; }
-    setChatHistory(prev => [...prev.filter(item => !('type'in item && item.type === 'schedule')), { id: Date.now(), text: 'Adicionando matéria...', sender: 'ai' }]);
+    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação. Por favor, faça login para adicionar matérias.', sender: 'ai' }]); return; }
+    setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Adicionando matéria...', sender: 'ai' }]);
     try {
       const response = await fetch(`${API_URL}/cronograma/materias`, {
         method: 'POST',
@@ -524,18 +521,18 @@ export function ChatPage() {
       if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || "Falha ao adicionar matéria."); }
       await refreshSchedule(false);
     } catch (error: unknown) {
-      if (error instanceof Error) { setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${error.message}`, sender: 'ai' }]);
-      } else { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro desconhecido ao adicionar matéria.', sender: 'ai' }]);}
+      if (error instanceof Error) {
+        setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${error.message}`, sender: 'ai' }]);
+      } else { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro desconhecido ao adicionar matéria.', sender: 'ai' }]); }
       await refreshSchedule(false);
     }
   };
 
-  // Função para ADICIONAR UM TÓPICO
   const handleAddNewTopic = async (materiaId: number, topicName: string) => {
     if (!topicName.trim()) return;
     const token = getAuthToken();
-    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação. Por favor, faça login.', sender: 'ai' }]); return; }
-    setChatHistory(prev => [...prev.filter(item => !('type'in item && item.type === 'schedule')), { id: Date.now(), text: 'Adicionando tópico...', sender: 'ai' }]);
+    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação. Por favor, faça login para adicionar tópicos.', sender: 'ai' }]); return; }
+    setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Adicionando tópico...', sender: 'ai' }]);
     try {
       const response = await fetch(`${API_URL}/cronograma/materias/${materiaId}/topicos`, {
         method: 'POST',
@@ -548,19 +545,17 @@ export function ChatPage() {
       if (error instanceof Error) {
         setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${error.message}`, sender: 'ai' }]);
       } else {
-        // CORRIGIDO: O erro de digitação 'Date.Não()' estava aqui.
         setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro desconhecido ao adicionar tópico.', sender: 'ai' }]);
       }
       await refreshSchedule(false);
     }
   };
-  
-  // Função para DELETAR UMA MATÉRIA
+
   const handleDeleteSubject = async (materiaId: number) => {
     if (!window.confirm("Tem certeza que quer deletar esta matéria e todos os seus tópicos?")) return;
     const token = getAuthToken();
     if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação.', sender: 'ai' }]); return; }
-    setChatHistory(prev => [...prev.filter(item => !('type'in item && item.type === 'schedule')), { id: Date.now(), text: 'Deletando matéria...', sender: 'ai' }]);
+    setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Deletando matéria...', sender: 'ai' }]);
     try {
       const response = await fetch(`${API_URL}/cronograma/materias/${materiaId}`, {
         method: 'DELETE',
@@ -569,18 +564,18 @@ export function ChatPage() {
       if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || "Falha ao deletar matéria."); }
       await refreshSchedule(false);
     } catch (error: unknown) {
-       if (error instanceof Error) { setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${error.message}`, sender: 'ai' }]);
-       } else { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro desconhecido ao deletar matéria.', sender: 'ai' }]);}
-       await refreshSchedule(false);
+      if (error instanceof Error) {
+        setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${error.message}`, sender: 'ai' }]);
+      } else { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro desconhecido ao deletar matéria.', sender: 'ai' }]); }
+      await refreshSchedule(false);
     }
   };
 
-  // Função para DELETAR UM TÓPICO
   const handleDeleteTopic = async (topicoId: number) => {
     if (!window.confirm("Tem certeza que quer deletar este tópico?")) return;
     const token = getAuthToken();
     if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação.', sender: 'ai' }]); return; }
-    setChatHistory(prev => [...prev.filter(item => !('type'in item && item.type === 'schedule')), { id: Date.now(), text: 'Deletando tópico...', sender: 'ai' }]);
+    setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Deletando tópico...', sender: 'ai' }]);
     try {
       const response = await fetch(`${API_URL}/cronograma/topicos/${topicoId}`, {
         method: 'DELETE',
@@ -589,41 +584,48 @@ export function ChatPage() {
       if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || "Falha ao deletar tópico."); }
       await refreshSchedule(false);
     } catch (error: unknown) {
-       if (error instanceof Error) { setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${error.message}`, sender: 'ai' }]);
-       } else { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro desconhecido ao deletar tópico.', sender: 'ai' }]);}
-       await refreshSchedule(false);
+      if (error instanceof Error) {
+        setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${error.message}`, sender: 'ai' }]);
+      } else { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro desconhecido ao deletar tópico.', sender: 'ai' }]); }
+      await refreshSchedule(false);
     }
   };
-  
-  // Função para buscar o PLANO SEMANAL
+
   const fetchWeeklySchedule = async () => {
     const token = getAuthToken();
-    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação.', sender: 'ai' }]); return; }
+    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação. Por favor, faça login para gerar o plano semanal.', sender: 'ai' }]); return; }
     setChatHistory(prev => [...prev, { id: Date.now(), text: 'Gerando seu plano de estudos semanal...', sender: 'ai' }]);
     try {
       const response = await fetch(`${API_URL}/cronograma/me/semanal`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || "Falha ao gerar plano."); }
-      
+
       const weeklyScheduleData: WeeklyScheduleResponse = await response.json();
-      
+
       setChatHistory(prev => [
         ...prev,
         { plan: weeklyScheduleData, type: 'weekly_schedule', id: Date.now() }
       ]);
     } catch (error: unknown) {
-       if (error instanceof Error) {
-          setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${error.message}`, sender: 'ai' }]);
-       } else {
-          setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro desconhecido ao gerar plano.', sender: 'ai' }]);
-       }
+      if (error instanceof Error) {
+        setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${error.message}`, sender: 'ai' }]);
+      } else {
+        setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro desconhecido ao gerar plano.', sender: 'ai' }]);
+      }
     }
   };
 
-  // Lógica de clique nas ações do menu
   const handleActionClick = async (action: 'get_questions' | 'edit_schedule' | 'get_weekly_schedule') => {
-    // CORRIGIDO: de 'let' para 'const'
+    const params = new URLSearchParams(location.search);
+    const isGuest = params.get('guest') === 'true';
+    const token = getAuthToken();
+
+    if (isGuest && (!token) && (action === 'edit_schedule' || action === 'get_weekly_schedule' || action === 'get_questions')) {
+      setChatHistory(prev => [...prev, { id: Date.now(), text: `Esta funcionalidade requer que você esteja conectado a uma conta.`, sender: 'ai' }]);
+      return;
+    }
+
     const lastItemIndex = chatHistory.length - 1;
     const lastItem = chatHistory[lastItemIndex];
     if (lastItem && 'type' in lastItem && lastItem.type === 'action_menu') {
@@ -636,7 +638,7 @@ export function ChatPage() {
     if (action === 'get_questions') {
       fetchQuestions(activeSubject);
     }
-    if (action === 'edit_schedule') { 
+    if (action === 'edit_schedule') {
       await refreshSchedule();
     }
     if (action === 'get_weekly_schedule') {
@@ -644,13 +646,12 @@ export function ChatPage() {
     }
   };
 
-  // Função para mudar de matéria
   const handleSubjectClick = (subject: string) => {
     setActiveSubject(subject);
-    setChatHistory(prev => [ 
+    setChatHistory(prev => [
       ...prev,
       { id: Date.now(), text: `Certo! Mudei o foco para ${subject}.`, sender: 'ai' },
-      { id: Date.now() + 1, type: 'action_menu' } 
+      { id: Date.now() + 1, type: 'action_menu' }
     ]);
   };
 
@@ -672,37 +673,40 @@ export function ChatPage() {
         <main className={styles.messageList}>
           {chatHistory.map((item, index) => {
             const isLastItem = index === chatHistory.length - 1;
-            
+
             if ('sender' in item) {
               return <ChatMessage key={item.id || index} msg={item} />
-            } 
+            }
             if (item.type === 'question') {
-              return <QuestionDisplay 
-                        key={item.id || index} 
-                        question={item} 
-                        onAnswerSelect={handleAnswerSelect} 
-                        isLast={isLastItem}
-                     />
+              return <QuestionDisplay
+                key={item.id || index}
+                question={item}
+                onAnswerSelect={handleAnswerSelect}
+                isLast={isLastItem}
+              />
             }
             if (item.type === 'action_menu') {
-              return <ActionMenu 
-                        key={item.id || index} 
-                        onActionClick={handleActionClick} 
-                        isLast={isLastItem} 
-                     />
+              return <ActionMenu
+                key={item.id || index}
+                onActionClick={handleActionClick}
+                isLast={isLastItem}
+              />
             }
             if (item.type === 'schedule') {
-              return <ScheduleDisplay 
-                        key={item.id || index} 
-                        schedule={item} 
-                        onAddSubject={handleAddNewSubject}
-                        onAddTopic={handleAddNewTopic}
-                        onDeleteSubject={handleDeleteSubject}
-                        onDeleteTopic={handleDeleteTopic}
-                     />
+              return <ScheduleDisplay
+                key={item.id || index}
+                schedule={item}
+                onAddSubject={handleAddNewSubject}
+                onAddTopic={handleAddNewTopic}
+                onDeleteSubject={handleDeleteSubject}
+                onDeleteTopic={handleDeleteTopic}
+              />
             }
             if (item.type === 'weekly_schedule') {
-              return <WeeklyScheduleDisplay key={item.id || index} schedule={item} />
+              return <WeeklyScheduleDisplay
+                key={item.id || index}
+                schedule={item}
+              />
             }
             return null;
           })}
@@ -714,16 +718,16 @@ export function ChatPage() {
             <input
               type="text"
               className={`${styles.chatInput} form-control`}
-              placeholder={activeSubject ? "Digite sua mensagem..." : "Selecione uma matéria para iniciar..."}
+              placeholder={activeSubject ? `Envie uma mensagem sobre ${activeSubject}...` : "Selecione uma matéria para iniciar..."}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && activeSubject && handleSendMessage()}
+              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
               disabled={!activeSubject}
             />
             <button
-              className={`${styles.sendButton} btn p-2`}
               onClick={handleSendMessage}
-              disabled={!activeSubject} // Corrigido 'activeD'
+              className={`${styles.sendButton} btn p-2`}
+              disabled={!activeSubject || !inputValue.trim()}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" className="bi bi-send-fill" viewBox="0 0 16 16"><path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083l6-15Zm-1.833 1.89L6.637 10.07l-4.99-3.176 14.12-6.393Z" /></svg>
             </button>
