@@ -109,6 +109,7 @@
   border-radius: 50%;
   background-color: #3b82f6;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .messageContent {
@@ -160,6 +161,7 @@
   background: #1d4ed8;
 }
 
+/* --- MEDIA QUERIES --- */
 @media (max-width: 768px) {
   .chatPageContainer {
     padding: 0.5rem;
@@ -185,5 +187,94 @@
 
   .messageBubble {
     max-width: 95%;
+  }
+}
+
+/* --- Mascote Persistente (Flutuante) --- */
+
+.mascotContainer {
+  position: fixed; /* Use fixed para ficar presa na tela mesmo rolando */
+  bottom: 80px;    /* Distância do fundo */
+  right: 20px;     /* Distância da direita */
+  z-index: 1000;   /* Fica acima de tudo */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none; /* Permite clicar através da área vazia */
+}
+
+/* CONTROLE DO TAMANHO DA IMAGEM AQUI */
+.mascotImageWrapper {
+  width: 120px;  /* <--- TAMANHO DEFINIDO PARA NÃO FICAR GIGANTE */
+  height: 120px; /* Mantenha igual a largura para ser um círculo */
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  background-color: #2563eb;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: auto; /* Permite clicar na mascote */
+  cursor: pointer;
+}
+
+.mascotImageWrapper:hover {
+  transform: scale(1.05) rotate(5deg);
+}
+
+.mascotImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* O Balão de Ajuda */
+.floatingBubble {
+  background: white;
+  color: #1f2937;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: 10px;
+  margin-right: 10px;
+  max-width: 200px;
+  text-align: center;
+  font-size: 0.9rem;
+  animation: popIn 0.4s ease-out;
+  pointer-events: auto;
+}
+
+.helpBtn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  margin-top: 8px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+}
+
+.helpBtn:hover {
+  background: #1d4ed8;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Ajuste para Mobile: Fica menorzinha */
+@media (max-width: 768px) {
+  .mascotImageWrapper {
+    width: 70px;
+    height: 70px;
+  }
+  .mascotContainer {
+    bottom: 75px;
+    right: 10px;
   }
 }
