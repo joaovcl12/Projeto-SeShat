@@ -35,6 +35,7 @@
 
 .chatWindow {
   flex-grow: 1;
+  position: relative;
 }
 
 .sidebarHeader {
@@ -129,38 +130,6 @@
   border-bottom-left-radius: 0.25rem;
 }
 
-.inputArea {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.inputGroup {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 0.75rem;
-  padding: 0.5rem;
-}
-
-.chatInput {
-  background: transparent;
-  border: none;
-  color: white;
-  outline: none;
-  box-shadow: none;
-}
-
-.chatInput::placeholder {
-  color: #9ca3af;
-}
-
-.sendButton {
-  background: #2563eb;
-  border-radius: 0.5rem;
-}
-
-.sendButton:hover {
-  background: #1d4ed8;
-}
-
 /* --- MEDIA QUERIES --- */
 @media (max-width: 768px) {
   .chatPageContainer {
@@ -181,10 +150,6 @@
     padding: 1rem 0.75rem;
   }
 
-  .inputArea {
-    padding: 0.75rem;
-  }
-
   .messageBubble {
     max-width: 95%;
   }
@@ -193,27 +158,34 @@
 /* --- Mascote Persistente (Flutuante) --- */
 
 .mascotContainer {
-  position: fixed; /* Use fixed para ficar presa na tela mesmo rolando */
-  bottom: 80px;    /* Distância do fundo */
-  right: 20px;     /* Distância da direita */
-  z-index: 1000;   /* Fica acima de tudo */
+  position: absolute;
+  bottom: 20px;
+  /* Distância do fundo do chatWindow */
+  right: 20px;
+  /* Distância da direita do chatWindow */
+  z-index: 1000;
+  /* Fica acima de tudo */
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  pointer-events: none; /* Permite clicar através da área vazia */
+  pointer-events: none;
+  /* Permite clicar através da área vazia */
 }
 
 /* CONTROLE DO TAMANHO DA IMAGEM AQUI */
 .mascotImageWrapper {
-  width: 120px;  /* <--- TAMANHO DEFINIDO PARA NÃO FICAR GIGANTE */
-  height: 120px; /* Mantenha igual a largura para ser um círculo */
+  width: 120px;
+  /* <--- TAMANHO DEFINIDO PARA NÃO FICAR GIGANTE */
+  height: 120px;
+  /* Mantenha igual a largura para ser um círculo */
   border-radius: 50%;
   border: 3px solid rgba(255, 255, 255, 0.8);
   background-color: #2563eb;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  pointer-events: auto; /* Permite clicar na mascote */
+  pointer-events: auto;
+  /* Permite clicar na mascote */
   cursor: pointer;
 }
 
@@ -263,8 +235,15 @@
 }
 
 @keyframes popIn {
-  from { opacity: 0; transform: translateY(10px) scale(0.9); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* Ajuste para Mobile: Fica menorzinha */
@@ -273,8 +252,58 @@
     width: 70px;
     height: 70px;
   }
+
   .mascotContainer {
     bottom: 75px;
     right: 10px;
+  }
+}
+
+.messageList::-webkit-scrollbar,
+.sidebarList::-webkit-scrollbar {
+  width: 8px;
+  /* Largura estreita */
+  height: 8px;
+}
+
+/* 2. Estiliza o TRACK (o fundo da barra de rolagem) */
+.messageList::-webkit-scrollbar-track,
+.sidebarList::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  /* Fundo sutil */
+  border-radius: 10px;
+}
+
+/* 3. Estiliza o THUMB (o "pegador" que você move) */
+.messageList::-webkit-scrollbar-thumb,
+.sidebarList::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  /* Cor semitransparente */
+  border-radius: 10px;
+  border: 2px solid transparent;
+  /* Ocupa menos espaço e tem uma "borda" invisível */
+}
+
+/* 4. Estiliza o THUMB ao passar o mouse (Torna mais visível) */
+.messageList::-webkit-scrollbar-thumb:hover,
+.sidebarList::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+  /* Torna mais claro no hover */
+}
+
+.floatingBubble.fade-out {
+  animation: fadeOut 0.3s ease-in forwards;
+  /* Duração de 0.3s */
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
   }
 }
