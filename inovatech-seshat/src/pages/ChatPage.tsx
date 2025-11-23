@@ -112,10 +112,9 @@ const ChatMessage = ({ msg }: { msg: Message }) => (
 
 // ALTERADO: Removemos a IAra daqui, agora ela é um componente separado
 // Adicionei onRequestHint na tipagem e nos argumentos
-const QuestionDisplay = ({ question, onAnswerSelect, isLast }: { // onRequestHint REMOVIDO DA DESESTRUTURAÇÃO
+const QuestionDisplay = ({ question, onAnswerSelect }: { // isLast REMOVIDO DA DESESTRUTURAÇÃO
   question: Question;
   onAnswerSelect: (optionKey: string) => void;
-  isLast: boolean;
 }) => {
   const optionsArray = Array.isArray(question.options)
     ? question.options.map((text, index) => ({ key: String(index), text }))
@@ -842,7 +841,6 @@ export function ChatPage() {
                 key={item.id || index}
                 question={item}
                 onAnswerSelect={handleAnswerSelect}
-                isLast={isLastItem}
               />
             }
             if (item.type === 'action_menu') {
