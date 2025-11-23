@@ -47,13 +47,17 @@ type WeeklyScheduleResponse = { [dia: string]: string; } | { detalhe: string };
 type WeeklySchedule = {
   plan: WeeklyScheduleResponse;
 };
+type AnalysisData = {
+  feedback_text: string;
+  suggested_topics: string[];
+};
 type ChatItem =
   | Message
   | (Question & { type: 'question' })
   | { type: 'action_menu'; id: number; disabled?: boolean; }
   | (Cronograma & { type: 'schedule' })
-  | (WeeklySchedule & { type: 'weekly_schedule'; id: number });
-
+  | (WeeklySchedule & { type: 'weekly_schedule'; id: number })
+  | (AnalysisData & { type: 'analysis'; id: number });
 // --- Componentes de Ajuda ---
 const AiAvatar = () => (
   <div className={`${styles.avatar} d-flex align-items-center justify-content-center overflow-hidden`}>
@@ -151,8 +155,10 @@ const QuestionDisplay = ({ question, onAnswerSelect }: { // isLast REMOVIDO DA D
   );
 };
 
-const ActionMenu = ({ onActionClick, isLast }: {
-  onActionClick: (action: 'get_questions' | 'edit_schedule' | 'get_weekly_schedule') => void;
+// COMPONENTE ATUALIZADO
+const ActionMenu = ({ onActionClick, isLast }: { 
+  // Adicionado 'analyze_performance' na tipagem
+  onActionClick: (action: 'get_questions' | 'edit_schedule' | 'get_weekly_schedule' | 'analyze_performance') => void;
   isLast: boolean;
 }) => (
   <div className={`${styles.messageBubble} ${styles.ai}`}>
@@ -169,11 +175,14 @@ const ActionMenu = ({ onActionClick, isLast }: {
         <button className="btn btn-outline-light" onClick={() => onActionClick('get_weekly_schedule')} disabled={!isLast}>
           Gerar Plano Semanal
         </button>
+        {/* NOVO BOTÃO AQUI */}
+        <button className="btn btn-info text-white fw-bold" onClick={() => onActionClick('analyze_performance')} disabled={!isLast}>
+          ✨ Analisar meu Desempenho (IA)
+        </button>
       </div>
     </div>
   </div>
 );
-
 
 
 const AddTopicForm = ({ materiaId, onAddTopic }: {
@@ -359,6 +368,29 @@ const PersistentMascot = ({ activeQuestion, onRequestHint, showHintOffer, onMasc
   );
 };
 
+// NOVO COMPONENTE: Exibe a análise da IA
+const AnalysisDisplay = ({ data }: { data: AnalysisData }) => (
+  <div className={`${styles.messageBubble} ${styles.ai}`}>
+    <AiAvatar />
+    <div className={styles.messageContent}>
+      <h5 className="text-white mb-3">📊 Análise de Desempenho</h5>
+      <p style={{ whiteSpace: 'pre-wrap' }}>{data.feedback_text}</p>
+      
+      {data.suggested_topics.length > 0 && (
+        <div className="mt-3 pt-3 border-top border-white border-opacity-10">
+          <h6 className="fw-bold text-info">Tópicos Sugeridos para Estudo:</h6>
+          <ul className="list-unstyled">
+            {data.suggested_topics.map((topic, idx) => (
+              <li key={idx} className="mb-1">🔹 {topic}</li>
+            ))}
+          </ul>
+          <small className="text-white-50">Adicione estes tópicos ao seu cronograma!</small>
+        </div>
+      )}
+    </div>
+  </div>
+);
+
 // --- Componente Principal da Página ---
 export function ChatPage() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
@@ -368,6 +400,8 @@ export function ChatPage() {
   const [questionList, setQuestionList] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isMobileLayout] = useState(window.innerWidth <= 768);
+  // NOVO: Estado para contar as dicas e oferecer níveis progressivos
+  const [hintCounts, setHintCounts] = useState<Record<number, number>>({});
 
   // --- ADICIONE ESTA LINHA AQUI: ---
   const activeQuestion = questionList.length > 0 ? questionList[currentQuestionIndex] : null;
@@ -584,24 +618,31 @@ export function ChatPage() {
     }
   };
 
-  // SUBSTITUA A SUA FUNÇÃO handleRequestHint POR ESTA CORRIGIDA:
-  // FUNÇÃO handleRequestHint ATUALIZADA
+  // FUNÇÃO ATUALIZADA: Dicas Progressivas
   const handleRequestHint = async (questionId: number) => {
     const token = getAuthToken();
     if (!token) return;
 
-    // setChatHistory(prev => [...prev, { id: Date.now(), text: "Preciso de uma dica, IAra!", sender: 'user' }]); // REMOVIDO
+    // 1. Calcula o próximo nível (1, 2, ou 3)
+    const currentLevel = hintCounts[questionId] || 0;
+    const nextLevel = Math.min(currentLevel + 1, 3);
 
-    setChatHistory(prev => [...prev, { id: Date.now() + 1, text: "Deixe-me pensar em como te ajudar...", sender: 'ai' }]);
+    // 2. Atualiza o contador local
+    setHintCounts(prev => ({ ...prev, [questionId]: nextLevel }));
+
+    // 3. Mensagens de UI
+    setChatHistory(prev => [...prev, { id: Date.now(), text: `Preciso de uma dica (Nível ${nextLevel}), IAra!`, sender: 'user' }]);
+    setChatHistory(prev => [...prev, { id: Date.now()+1, text: "Pensando...", sender: 'ai' }]);
 
     try {
       const response = await fetch(`${API_URL}/ia/dica`, {
         method: 'POST',
-        headers: {
+        headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ question_id: questionId })
+        // 4. Envia o NÍVEL para o backend
+        body: JSON.stringify({ question_id: questionId, level: nextLevel })
       });
 
       if (response.status === 401) { handleApiError(new Error('401')); return; }
@@ -609,18 +650,16 @@ export function ChatPage() {
 
       const data = await response.json();
 
-      // CORREÇÃO DO TYPE ERROR AQUI (adicionado 'text' in m):
       setChatHistory(prev => [
-        // Filtramos a mensagem de carregamento e adicionamos a dica
-        ...prev.filter(m => !('text' in m) || m.text !== "Deixe-me pensar em como te ajudar..."),
-        { id: Date.now() + 2, text: `💡 Dica: ${data.dica}`, sender: 'ai' }
+        ...prev.filter(m => !('text' in m) || m.text !== "Pensando..."),
+        // 5. Mostra a dica com o nível
+        { id: Date.now()+2, text: `💡 Dica (${nextLevel}/3): ${data.dica}`, sender: 'ai' }
       ]);
 
     } catch {
-      // Adicionamos uma mensagem de erro, filtrando a mensagem de carregamento
       setChatHistory(prev => [
-        ...prev.filter(m => !('text' in m) || m.text !== "Deixe-me pensar em como te ajudar..."),
-        { id: Date.now() + 2, text: "Desculpe, não consegui gerar uma dica agora.", sender: 'ai' }
+        ...prev.filter(m => !('text' in m) || m.text !== "Pensando..."),
+        { id: Date.now()+2, text: "Desculpe, não consegui gerar uma dica agora.", sender: 'ai' }
       ]);
     }
   };
@@ -772,7 +811,38 @@ export function ChatPage() {
     }
   };
 
-  const handleActionClick = async (action: 'get_questions' | 'edit_schedule' | 'get_weekly_schedule') => {
+  // NOVA FUNÇÃO: Buscar análise de desempenho
+  const fetchPerformanceAnalysis = async () => {
+    const token = getAuthToken();
+    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação.', sender: 'ai' }]); return; }
+    
+    setChatHistory(prev => [...prev, { id: Date.now(), text: 'Analisando seu desempenho com IA...', sender: 'ai' }]);
+
+    try {
+      const response = await fetch(`${API_URL}/ia/analise-erros`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.status === 401) { handleApiError(new Error('401')); return; }
+      if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || "Falha na análise."); }
+
+      const analysisData: AnalysisData = await response.json();
+      
+      setChatHistory(prev => [
+        // Remove a mensagem de "Analisando..."
+        ...prev.filter(m => !('text' in m) || m.text !== 'Analisando seu desempenho com IA...'),
+        // Adiciona o componente de análise
+        { ...analysisData, type: 'analysis', id: Date.now() }
+      ]);
+
+    } catch (error: unknown) {
+       if (error instanceof Error && !error.message.includes('401')) {
+          setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro ao analisar: ${error.message}`, sender: 'ai' }]);
+       }
+    }
+  };
+
+  const handleActionClick = async (action: 'get_questions' | 'edit_schedule' | 'get_weekly_schedule'| 'analyze_performance') => {
     const params = new URLSearchParams(location.search);
     const isGuest = params.get('guest') === 'true';
     const token = getAuthToken();
@@ -799,6 +869,9 @@ export function ChatPage() {
     }
     if (action === 'get_weekly_schedule') {
       await fetchWeeklySchedule();
+    }
+    if (action === 'analyze_performance') {
+      await fetchPerformanceAnalysis();
     }
   };
 
@@ -884,6 +957,9 @@ export function ChatPage() {
             }
             if (item.type === 'weekly_schedule') {
               return <WeeklyScheduleDisplay key={item.id || index} schedule={item} />
+            }
+            if (item.type === 'analysis') {
+                return <AnalysisDisplay key={item.id || index} data={item} />
             }
             return null;
           })}
