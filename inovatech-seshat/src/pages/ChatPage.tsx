@@ -498,35 +498,57 @@ export function ChatPage() {
   };
 
   const handleAnswerSelect = async (selectedOptionKey: string) => {
+    // 1. Lógica do fade-out da mascote (mantida)
     if (showHintOffer) {
       setBubbleClass(styles['fade-out']);
-      // Após 300ms (tempo da animação), remove o componente
       setTimeout(() => {
         setShowHintOffer(false);
-        setBubbleClass(''); // Reseta a classe para a próxima vez
+        setBubbleClass('');
       }, 300);
     } else {
-      setShowHintOffer(false); // Garante que some, se for o caso
+      setShowHintOffer(false);
     }
-    const lastItemIndex = chatHistory.length - 1;
-    const lastItem = chatHistory[lastItemIndex];
-    if (!lastItem || (!('type' in lastItem) && !('sender' in lastItem))) return;
 
-    const updatedHistory = [...chatHistory];
-    const itemToDisable = { ...lastItem, disabled: true };
-    updatedHistory[lastItemIndex] = itemToDisable as ChatItem;
-    setChatHistory(updatedHistory);
+    // 2. Tenta encontrar a questão real que está sendo respondida (usando o ID da questão atual)
+    const currentQuestion = questionList[currentQuestionIndex];
 
-    if ('type' in lastItem && lastItem.type === 'question' && Array.isArray(lastItem.options) && lastItem.subject === "Matérias") {
-      const selectedSubject = lastItem.options[parseInt(selectedOptionKey)];
+    // Encontra o índice da *última* mensagem de question (seja ela a de matéria ou de exame)
+    const questionItemIndex = chatHistory.findIndex(item =>
+      'type' in item && item.type === 'question' && item.disabled !== true
+    );
+
+    if (questionItemIndex === -1) return; // Não há questão ativa.
+
+    const questionItem = chatHistory[questionItemIndex];
+
+    // Lógica para seleção de matéria (sem ID de API)
+    if ('type' in questionItem && questionItem.type === 'question' && Array.isArray(questionItem.options) && questionItem.subject === "Matérias") {
+
+      const selectedSubject = questionItem.options[parseInt(selectedOptionKey)];
       const userMessage: Message = { id: Date.now(), text: `Quero estudar: ${selectedSubject}`, sender: 'user' };
+
+      // Desativa a questão de seleção de matéria
+      const updatedHistory = [...chatHistory];
+      const itemToDisable = { ...questionItem, disabled: true };
+      updatedHistory[questionItemIndex] = itemToDisable as ChatItem;
+      setChatHistory(updatedHistory);
+
+      // Continua com a troca de matéria
       setChatHistory(prev => [...prev, userMessage]);
       handleSubjectClick(selectedSubject);
       return;
     }
 
-    const currentQuestion = questionList[currentQuestionIndex];
-    if (!currentQuestion) return;
+
+    // --- Lógica para Questão de Exame (com ID) ---
+    if (!currentQuestion) return; // Se for uma questão de exame, deve haver currentQuestion.
+
+    // Desativa a questão de exame (é o item encontrado em questionItemIndex)
+    const updatedHistory = [...chatHistory];
+    const itemToDisable = { ...questionItem, disabled: true };
+    updatedHistory[questionItemIndex] = itemToDisable as ChatItem;
+    setChatHistory(updatedHistory);
+
 
     const answerText = Array.isArray(currentQuestion.options)
       ? currentQuestion.options[parseInt(selectedOptionKey)]
