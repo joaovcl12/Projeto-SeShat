@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './ChatPage.module.css';
-import iaraImg from '../../public/iara2.png';
+import iaraImg from '/iara2.png';
 
 const API_URL = "https://seshat-api-m30w.onrender.com";
 
@@ -156,7 +156,7 @@ const QuestionDisplay = ({ question, onAnswerSelect }: { // isLast REMOVIDO DA D
 };
 
 // COMPONENTE ATUALIZADO
-const ActionMenu = ({ onActionClick, isLast }: { 
+const ActionMenu = ({ onActionClick, isLast }: {
   // Adicionado 'analyze_performance' na tipagem
   onActionClick: (action: 'get_questions' | 'edit_schedule' | 'get_weekly_schedule' | 'analyze_performance') => void;
   isLast: boolean;
@@ -375,7 +375,7 @@ const AnalysisDisplay = ({ data }: { data: AnalysisData }) => (
     <div className={styles.messageContent}>
       <h5 className="text-white mb-3">📊 Análise de Desempenho</h5>
       <p style={{ whiteSpace: 'pre-wrap' }}>{data.feedback_text}</p>
-      
+
       {data.suggested_topics.length > 0 && (
         <div className="mt-3 pt-3 border-top border-white border-opacity-10">
           <h6 className="fw-bold text-info">Tópicos Sugeridos para Estudo:</h6>
@@ -631,13 +631,12 @@ export function ChatPage() {
     setHintCounts(prev => ({ ...prev, [questionId]: nextLevel }));
 
     // 3. Mensagens de UI
-    setChatHistory(prev => [...prev, { id: Date.now(), text: `Preciso de uma dica (Nível ${nextLevel}), IAra!`, sender: 'user' }]);
-    setChatHistory(prev => [...prev, { id: Date.now()+1, text: "Pensando...", sender: 'ai' }]);
+    setChatHistory(prev => [...prev, { id: Date.now() + 1, text: "Pensando...", sender: 'ai' }]);
 
     try {
       const response = await fetch(`${API_URL}/ia/dica`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
@@ -653,13 +652,13 @@ export function ChatPage() {
       setChatHistory(prev => [
         ...prev.filter(m => !('text' in m) || m.text !== "Pensando..."),
         // 5. Mostra a dica com o nível
-        { id: Date.now()+2, text: `💡 Dica (${nextLevel}/3): ${data.dica}`, sender: 'ai' }
+        { id: Date.now() + 2, text: `💡 Dica (${nextLevel}/3): ${data.dica}`, sender: 'ai' }
       ]);
 
     } catch {
       setChatHistory(prev => [
         ...prev.filter(m => !('text' in m) || m.text !== "Pensando..."),
-        { id: Date.now()+2, text: "Desculpe, não consegui gerar uma dica agora.", sender: 'ai' }
+        { id: Date.now() + 2, text: "Desculpe, não consegui gerar uma dica agora.", sender: 'ai' }
       ]);
     }
   };
@@ -815,19 +814,19 @@ export function ChatPage() {
   const fetchPerformanceAnalysis = async () => {
     const token = getAuthToken();
     if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação.', sender: 'ai' }]); return; }
-    
+
     setChatHistory(prev => [...prev, { id: Date.now(), text: 'Analisando seu desempenho com IA...', sender: 'ai' }]);
 
     try {
       const response = await fetch(`${API_URL}/ia/analise-erros`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (response.status === 401) { handleApiError(new Error('401')); return; }
       if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || "Falha na análise."); }
 
       const analysisData: AnalysisData = await response.json();
-      
+
       setChatHistory(prev => [
         // Remove a mensagem de "Analisando..."
         ...prev.filter(m => !('text' in m) || m.text !== 'Analisando seu desempenho com IA...'),
@@ -836,13 +835,13 @@ export function ChatPage() {
       ]);
 
     } catch (error: unknown) {
-       if (error instanceof Error && !error.message.includes('401')) {
-          setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro ao analisar: ${error.message}`, sender: 'ai' }]);
-       }
+      if (error instanceof Error && !error.message.includes('401')) {
+        setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro ao analisar: ${error.message}`, sender: 'ai' }]);
+      }
     }
   };
 
-  const handleActionClick = async (action: 'get_questions' | 'edit_schedule' | 'get_weekly_schedule'| 'analyze_performance') => {
+  const handleActionClick = async (action: 'get_questions' | 'edit_schedule' | 'get_weekly_schedule' | 'analyze_performance') => {
     const params = new URLSearchParams(location.search);
     const isGuest = params.get('guest') === 'true';
     const token = getAuthToken();
@@ -959,7 +958,7 @@ export function ChatPage() {
               return <WeeklyScheduleDisplay key={item.id || index} schedule={item} />
             }
             if (item.type === 'analysis') {
-                return <AnalysisDisplay key={item.id || index} data={item} />
+              return <AnalysisDisplay key={item.id || index} data={item} />
             }
             return null;
           })}
