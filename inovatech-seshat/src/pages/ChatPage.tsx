@@ -9,7 +9,6 @@ const getAuthToken = (): string | null => {
   return localStorage.getItem('authToken');
 };
 
-// --- Tipos ---
 type Message = { id: number; text: string; sender: 'user' | 'ai'; disabled?: boolean; };
 type MateriasResponse = { materias_disponiveis: string[]; };
 type Question = {
@@ -57,7 +56,6 @@ type ChatItem =
   | (Cronograma & { type: 'schedule' })
   | (WeeklySchedule & { type: 'weekly_schedule'; id: number })
   | (AnalysisData & { type: 'analysis'; id: number });
-// --- Componentes de Ajuda ---
 const AiAvatar = () => (
   <div className={`${styles.avatar} d-flex align-items-center justify-content-center overflow-hidden`}>
     <img
@@ -68,13 +66,13 @@ const AiAvatar = () => (
   </div>
 );
 
-const Sidebar = ({ isOpen, onToggle, activeSubject, onSubjectClick, subjects, isBusy }: { // <-- isBusy ADICIONADO AQUI
+const Sidebar = ({ isOpen, onToggle, activeSubject, onSubjectClick, subjects, isBusy }: {
   isOpen: boolean;
   onToggle: () => void;
   activeSubject: string;
   onSubjectClick: (subject: string) => void;
   subjects: string[];
-  isBusy: boolean; // <-- NOVO PROP
+  isBusy: boolean;
 }) => (
   <div className={styles.glassPanel}>
     <div className={styles.sidebarHeader}>
@@ -86,8 +84,8 @@ const Sidebar = ({ isOpen, onToggle, activeSubject, onSubjectClick, subjects, is
     {isOpen && (
       <ul className={styles.sidebarList}>
         {subjects.map((subject) => (
-          <li key={subject} className={`${styles.subjectItem} ${subject === activeSubject ? styles.active : ''} ${isBusy ? styles.disabled : ''} text-white-50`} // <-- ADICIONA CLASSE 'disabled'
-            onClick={() => !isBusy && onSubjectClick(subject)} // <-- ADICIONA LÓGICA DE BLOQUEIO NO CLIQUE
+          <li key={subject} className={`${styles.subjectItem} ${subject === activeSubject ? styles.active : ''} ${isBusy ? styles.disabled : ''} text-white-50`}
+            onClick={() => !isBusy && onSubjectClick(subject)}
           >
             {subject}
           </li>
@@ -98,7 +96,7 @@ const Sidebar = ({ isOpen, onToggle, activeSubject, onSubjectClick, subjects, is
     {!isOpen && (
       <ul className={styles.sidebarList} style={{ paddingTop: '2rem' }}>
         {subjects.map((subject) => (
-          <li key={subject + '-icon'} title={subject} className={`${styles.subjectItem} ${subject === activeSubject ? styles.active : ''} ${isBusy ? styles.disabled : ''} justify-content-center`} // <-- ADICIONA CLASSE 'disabled'
+          <li key={subject + '-icon'} title={subject} className={`${styles.subjectItem} ${subject === activeSubject ? styles.active : ''} ${isBusy ? styles.disabled : ''} justify-content-center`}
             onClick={() => !isBusy && onSubjectClick(subject)}>
             <span className='fs-5'>{subject.charAt(0)}</span>
           </li>
@@ -117,9 +115,7 @@ const ChatMessage = ({ msg }: { msg: Message }) => (
   </div>
 );
 
-// ALTERADO: Removemos a IAra daqui, agora ela é um componente separado
-// Adicionei onRequestHint na tipagem e nos argumentos
-const QuestionDisplay = ({ question, onAnswerSelect, isBusy }: { // isLast REMOVIDO DA DESESTRUTURAÇÃO
+const QuestionDisplay = ({ question, onAnswerSelect, isBusy }: {
   question: Question;
   onAnswerSelect: (optionKey: string) => void;
   isBusy: boolean;
@@ -129,8 +125,7 @@ const QuestionDisplay = ({ question, onAnswerSelect, isBusy }: { // isLast REMOV
     : Object.entries(question.options).map(([key, text]) => ({ key, text }));
 
   const isSubjectSelection = Array.isArray(question.options) && question.subject === "Matérias";
-  // LINHA CORRIGIDA
-  const isAnsweredOrOld = question.disabled || isBusy; // Apenas desabilitar se a propriedade 'disabled' estiver em true
+  const isAnsweredOrOld = question.disabled || isBusy;
 
   return (
     <div className={`${styles.messageBubble} ${styles.ai}`}>
@@ -159,9 +154,7 @@ const QuestionDisplay = ({ question, onAnswerSelect, isBusy }: { // isLast REMOV
   );
 };
 
-// COMPONENTE ATUALIZADO
 const ActionMenu = ({ onActionClick, isLast }: {
-  // Adicionado 'analyze_performance' na tipagem
   onActionClick: (action: 'get_questions' | 'edit_schedule' | 'get_weekly_schedule' | 'analyze_performance') => void;
   isLast: boolean;
 }) => (
@@ -179,9 +172,8 @@ const ActionMenu = ({ onActionClick, isLast }: {
         <button className="btn btn-outline-light" onClick={() => onActionClick('get_weekly_schedule')} disabled={!isLast}>
           Gerar Plano Semanal
         </button>
-        {/* NOVO BOTÃO AQUI */}
         <button className="btn btn-info text-white fw-bold" onClick={() => onActionClick('analyze_performance')} disabled={!isLast}>
-          ✨ Analisar meu Desempenho (IA)
+          Analisar meu Desempenho (IA)
         </button>
       </div>
     </div>
@@ -294,12 +286,9 @@ const ScheduleDisplay = ({ schedule, onAddSubject, onAddTopic, onDeleteSubject, 
 );
 
 const WeeklyScheduleDisplay = ({ schedule }: { schedule: WeeklySchedule & { type: 'weekly_schedule'; id: number } }) => {
-
-  // 1. Verifica se a propriedade 'detalhe' existe na schedule.plan
   if (!schedule.plan || 'detalhe' in schedule.plan) {
 
-    // Neste ponto, o TypeScript sabe que schedule.plan é do tipo { detalhe: string } ou nulo
-    const detailPlan = schedule.plan as { detalhe: string } | undefined; // O 'as' aqui é opcional, mas ajuda na clareza.
+    const detailPlan = schedule.plan as { detalhe: string } | undefined;
 
     return (
       <div className={`${styles.messageBubble} ${styles.ai}`}>
@@ -308,7 +297,7 @@ const WeeklyScheduleDisplay = ({ schedule }: { schedule: WeeklySchedule & { type
           <h5 className="text-white mb-3">Plano de Estudos Semanal</h5>
           <p className="text-white-50">
             {detailPlan && 'detalhe' in detailPlan
-              ? detailPlan.detalhe // Acesso direto e tipado
+              ? detailPlan.detalhe
               : "Não foi possível gerar seu plano. Adicione matérias e tópicos ao seu cronograma primeiro!"}
           </p>
         </div>
@@ -316,7 +305,6 @@ const WeeklyScheduleDisplay = ({ schedule }: { schedule: WeeklySchedule & { type
     );
   }
 
-  // 2. Se a verificação acima falhou, o TypeScript sabe que schedule.plan é do tipo { [dia: string]: string; }
   const dailyPlan = schedule.plan as { [dia: string]: string; };
 
   return (
@@ -325,7 +313,7 @@ const WeeklyScheduleDisplay = ({ schedule }: { schedule: WeeklySchedule & { type
       <div className={styles.messageContent}>
         <h5 className="text-white mb-3">Seu Plano de Estudos Semanal</h5>
         <ul className="list-unstyled mb-0">
-          {Object.entries(dailyPlan).map(([dia, topico]) => ( // Acesso tipado
+          {Object.entries(dailyPlan).map(([dia, topico]) => (
             <li key={dia} className="mb-1">
               <div className="d-flex">
                 <strong style={{ width: '120px', flexShrink: 0 }}>{dia}:</strong>
@@ -339,19 +327,17 @@ const WeeklyScheduleDisplay = ({ schedule }: { schedule: WeeklySchedule & { type
   );
 };
 
-// NOVO: Componente da Mascote Persistente
 const PersistentMascot = ({ activeQuestion, onRequestHint, showHintOffer, onMascotClick, bubbleClass }: {
   activeQuestion: Question | null,
   onRequestHint: (id: number) => void,
-  showHintOffer: boolean, // Novo prop
-  onMascotClick: () => void // Novo prop
-  bubbleClass: string // <--- ADICIONE ESTA LINHA AQUI NA TIPAGEM
+  showHintOffer: boolean,
+  onMascotClick: () => void
+  bubbleClass: string
 }) => {
   const isQuestionActive = activeQuestion && !activeQuestion.disabled;
 
   return (
     <div className={styles.mascotContainer}>
-      {/* Balão de Ajuda Condicional: SÓ MOSTRA SE A QUESTÃO ESTÁ ATIVA E showHintOffer É TRUE */}
       {isQuestionActive && showHintOffer && (
         <div className={`${styles.floatingBubble} ${bubbleClass}`}>
           Precisa de uma ajudinha com essa questão?
@@ -364,15 +350,13 @@ const PersistentMascot = ({ activeQuestion, onRequestHint, showHintOffer, onMasc
         </div>
       )}
 
-      {/* Imagem da Mascote - Agora com o onClick para forçar a dica */}
-      <div className={styles.mascotImageWrapper} onClick={onMascotClick}> {/* <--- ADICIONADO onClick */}
+      <div className={styles.mascotImageWrapper} onClick={onMascotClick}>
         <img src={iaraImg} alt="IAra" className={styles.mascotImg} />
       </div>
     </div>
   );
 };
 
-// NOVO COMPONENTE: Exibe a análise da IA
 const AnalysisDisplay = ({ data }: { data: AnalysisData }) => (
   <div className={`${styles.messageBubble} ${styles.ai}`}>
     <AiAvatar />
@@ -395,7 +379,6 @@ const AnalysisDisplay = ({ data }: { data: AnalysisData }) => (
   </div>
 );
 
-// --- Componente Principal da Página ---
 export function ChatPage() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [subjectsList, setSubjectsList] = useState<string[]>([]);
@@ -404,12 +387,9 @@ export function ChatPage() {
   const [questionList, setQuestionList] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isMobileLayout] = useState(window.innerWidth <= 768);
-  // NOVO: Estado para contar as dicas e oferecer níveis progressivos
   const [hintCounts, setHintCounts] = useState<Record<number, number>>({});
 
-  // --- ADICIONE ESTA LINHA AQUI: ---
   const activeQuestion = questionList.length > 0 ? questionList[currentQuestionIndex] : null;
-  // ---------------------------------
 
   const [showHintOffer, setShowHintOffer] = useState(false);
 
@@ -421,10 +401,8 @@ export function ChatPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // --- FUNÇÃO HELPER PARA TRATAR ERROS 401 ---
   const handleApiError = (error: unknown) => {
     if (error instanceof Error) {
-      // Verifica se o erro é do tipo Error antes de acessar a propriedade message
       if (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')) {
         localStorage.removeItem('authToken');
         navigate('/login?message=Sessão expirada. Faça login novamente.');
@@ -434,7 +412,6 @@ export function ChatPage() {
     return false;
   };
 
-  // Efeito para PROTEGER A ROTA
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const isGuest = params.get('guest') === 'true';
@@ -443,7 +420,6 @@ export function ChatPage() {
     }
   }, [navigate, location.search]);
 
-  // Efeito para buscar as matérias da API
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
@@ -492,31 +468,27 @@ export function ChatPage() {
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatHistory]);
 
   useEffect(() => {
-    // 1. Reseta a oferta de dica sempre que o índice da questão muda
     setShowHintOffer(false);
 
-    // 2. Verifica se há uma questão ativa (e não respondida)
     if (questionList.length > 0 && currentQuestionIndex < questionList.length) {
       const currentQuestion = questionList[currentQuestionIndex];
 
       if (currentQuestion && !currentQuestion.disabled) {
-        // 3. Inicia o timer de 30 segundos
         const timer = setTimeout(() => {
           setShowHintOffer(true);
-        }, 30000); // 30000 ms = 30 segundos
+        }, 30000);
 
-        // 4. Função de limpeza para cancelar o timer se o usuário responder
         return () => clearTimeout(timer);
       }
     }
 
-    return () => { }; // Cleanup vazio se não houver questão ativa
-  }, [currentQuestionIndex, questionList.length]); // Depende do índice da questão
+    return () => { };
+  }, [currentQuestionIndex, questionList.length]);
 
   const handleMascotClick = () => {
     if (activeQuestion && !activeQuestion.disabled && !showHintOffer) {
       setShowHintOffer(true);
-      setBubbleClass(''); // Garante que não há classe 'fade-out' se estiver aparecendo
+      setBubbleClass('');
     }
   };
 
@@ -540,7 +512,6 @@ export function ChatPage() {
   };
 
   const handleAnswerSelect = async (selectedOptionKey: string) => {
-    // 1. Lógica do fade-out da mascote (mantida)
     if (showHintOffer) {
       setBubbleClass(styles['fade-out']);
       setTimeout(() => {
@@ -551,41 +522,33 @@ export function ChatPage() {
       setShowHintOffer(false);
     }
 
-    // 2. Tenta encontrar a questão real que está sendo respondida (usando o ID da questão atual)
     const currentQuestion = questionList[currentQuestionIndex];
 
-    // Encontra o índice da *última* mensagem de question (seja ela a de matéria ou de exame)
     const questionItemIndex = chatHistory.findIndex(item =>
       'type' in item && item.type === 'question' && item.disabled !== true
     );
 
-    if (questionItemIndex === -1) return; // Não há questão ativa.
+    if (questionItemIndex === -1) return;
 
     const questionItem = chatHistory[questionItemIndex];
 
-    // Lógica para seleção de matéria (sem ID de API)
     if ('type' in questionItem && questionItem.type === 'question' && Array.isArray(questionItem.options) && questionItem.subject === "Matérias") {
 
       const selectedSubject = questionItem.options[parseInt(selectedOptionKey)];
       const userMessage: Message = { id: Date.now(), text: `Quero estudar: ${selectedSubject}`, sender: 'user' };
 
-      // Desativa a questão de seleção de matéria
       const updatedHistory = [...chatHistory];
       const itemToDisable = { ...questionItem, disabled: true };
       updatedHistory[questionItemIndex] = itemToDisable as ChatItem;
       setChatHistory(updatedHistory);
-
-      // Continua com a troca de matéria
       setChatHistory(prev => [...prev, userMessage]);
       handleSubjectClick(selectedSubject);
       return;
     }
 
 
-    // --- Lógica para Questão de Exame (com ID) ---
-    if (!currentQuestion) return; // Se for uma questão de exame, deve haver currentQuestion.
+    if (!currentQuestion) return;
 
-    // Desativa a questão de exame (é o item encontrado em questionItemIndex)
     const updatedHistory = [...chatHistory];
     const itemToDisable = { ...questionItem, disabled: true };
     updatedHistory[questionItemIndex] = itemToDisable as ChatItem;
@@ -626,21 +589,17 @@ export function ChatPage() {
     }
   };
 
-  // FUNÇÃO ATUALIZADA: Dicas Progressivas
   const handleRequestHint = async (questionId: number) => {
     const token = getAuthToken();
     if (!token) return;
 
     setIsBusy(true);
 
-    // 1. Calcula o próximo nível (1, 2, ou 3)
     const currentLevel = hintCounts[questionId] || 0;
     const nextLevel = Math.min(currentLevel + 1, 3);
 
-    // 2. Atualiza o contador local
     setHintCounts(prev => ({ ...prev, [questionId]: nextLevel }));
 
-    // 3. Mensagens de UI
     setChatHistory(prev => [...prev, { id: Date.now() + 1, text: "Pensando...", sender: 'ai' }]);
 
     try {
@@ -650,7 +609,6 @@ export function ChatPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        // 4. Envia o NÍVEL para o backend
         body: JSON.stringify({ question_id: questionId, level: nextLevel })
       });
 
@@ -661,7 +619,6 @@ export function ChatPage() {
 
       setChatHistory(prev => [
         ...prev.filter(m => !('text' in m) || m.text !== "Pensando..."),
-        // 5. Mostra a dica com o nível
         { id: Date.now() + 2, text: `💡 Dica (${nextLevel}/3): ${data.dica}`, sender: 'ai' }
       ]);
 
@@ -671,7 +628,6 @@ export function ChatPage() {
         { id: Date.now() + 2, text: "Desculpe, não consegui gerar uma dica agora.", sender: 'ai' }
       ]);
     } finally {
-      // 2. DESLIGA O LOADING APÓS TUDO ESTAR CONCLUÍDO (SUCESSO OU ERRO)
       setIsBusy(false);
     }
   };
@@ -823,7 +779,6 @@ export function ChatPage() {
     }
   };
 
-  // NOVA FUNÇÃO: Buscar análise de desempenho
   const fetchPerformanceAnalysis = async () => {
     const token = getAuthToken();
     if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação.', sender: 'ai' }]); return; }
@@ -841,9 +796,7 @@ export function ChatPage() {
       const analysisData: AnalysisData = await response.json();
 
       setChatHistory(prev => [
-        // Remove a mensagem de "Analisando..."
         ...prev.filter(m => !('text' in m) || m.text !== 'Analisando seu desempenho com IA...'),
-        // Adiciona o componente de análise
         { ...analysisData, type: 'analysis', id: Date.now() }
       ]);
 
@@ -888,16 +841,13 @@ export function ChatPage() {
   };
 
   const handleSubjectClick = (subject: string) => {
-    // 1. Função que executa a troca de matéria (o restante da lógica)
     const proceedWithSubjectChange = () => {
       setQuestionList([]);
       setCurrentQuestionIndex(0);
 
-      // 🛑 CORREÇÃO PRINCIPAL: Desativa a última questão no chatHistory
       setChatHistory(prevHistory => {
         const historyCopy = [...prevHistory];
 
-        // Encontra o índice da última questão não desativada
         let lastActiveQuestionIndex = -1;
         for (let i = historyCopy.length - 1; i >= 0; i--) {
           const item = historyCopy[i];
@@ -907,19 +857,16 @@ export function ChatPage() {
           }
         }
 
-        // Se encontrar uma questão ativa, desativa-a
         if (lastActiveQuestionIndex !== -1) {
           const itemToDisable = historyCopy[lastActiveQuestionIndex];
           historyCopy[lastActiveQuestionIndex] = { ...itemToDisable, disabled: true } as ChatItem;
         }
 
-        // Se encontrar uma questão ativa, desativa-a
         if (lastActiveQuestionIndex !== -1) {
           const itemToDisable = historyCopy[lastActiveQuestionIndex];
           historyCopy[lastActiveQuestionIndex] = { ...itemToDisable, disabled: true } as ChatItem;
         }
 
-        // Remove menus de ação ou cronogramas antigos, e adiciona a nova mensagem e menu
         const cleanHistory = historyCopy.filter(item =>
           !('type' in item && (item.type === 'action_menu' || item.type === 'schedule' || item.type === 'weekly_schedule' || item.type === 'analysis'))
         );
@@ -934,7 +881,6 @@ export function ChatPage() {
       setActiveSubject(subject);
     };
 
-    // 2. Lógica de animação do fade-out da mascote (mantida)
     if (showHintOffer) {
       setBubbleClass(styles['fade-out']);
 
@@ -947,7 +893,6 @@ export function ChatPage() {
       return;
     }
 
-    // 3. Se a dica NÃO estiver visível, executa imediatamente
     proceedWithSubjectChange();
   };
 
@@ -1013,9 +958,9 @@ export function ChatPage() {
         <PersistentMascot
           activeQuestion={activeQuestion}
           onRequestHint={handleRequestHint}
-          showHintOffer={showHintOffer} // <-- NOVO PROP 1 (Estado de visibilidade)
-          onMascotClick={handleMascotClick} // <-- NOVO PROP 2 (Função de clique)
-          bubbleClass={bubbleClass} // <--- NOVO PROP CONECTADO
+          showHintOffer={showHintOffer}
+          onMascotClick={handleMascotClick}
+          bubbleClass={bubbleClass}
         />
       </div>
     </div>
