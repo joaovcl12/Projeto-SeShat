@@ -766,6 +766,7 @@ export function ChatPage() {
   };
 
   const handleAddNewSubject = async (subjectName: string) => {
+    setIsBusy(true);
     if (!subjectName.trim()) return;
     setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Adicionando matéria...', sender: 'ai' }]);
     try {
@@ -777,10 +778,13 @@ export function ChatPage() {
         setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${errorMessage}`, sender: 'ai' }]);
       }
       await refreshSchedule(false);
+    } finally {
+      setIsBusy(false);
     }
   };
 
   const handleAddNewTopic = async (materiaId: number, topicName: string) => {
+    setIsBusy(true);
     if (!topicName.trim()) return;
     setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Adicionando tópico...', sender: 'ai' }]);
     try {
@@ -792,10 +796,13 @@ export function ChatPage() {
         setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${errorMessage}`, sender: 'ai' }]);
       }
       await refreshSchedule(false);
+    } finally {
+      setIsBusy(false);
     }
   };
 
   const handleDeleteSubject = async (materiaId: number) => {
+    setIsBusy(true);
     if (!window.confirm("Tem certeza que quer deletar esta matéria e todos os seus tópicos?")) return;
     setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Deletando matéria...', sender: 'ai' }]);
     try {
@@ -807,10 +814,13 @@ export function ChatPage() {
         setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${errorMessage}`, sender: 'ai' }]);
       }
       await refreshSchedule(false);
+    } finally {
+      setIsBusy(false);
     }
   };
 
   const handleDeleteTopic = async (topicoId: number) => {
+    setIsBusy(true);
     if (!window.confirm("Tem certeza que quer deletar este tópico?")) return;
     setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Deletando tópico...', sender: 'ai' }]);
     try {
@@ -822,6 +832,8 @@ export function ChatPage() {
         setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${errorMessage}`, sender: 'ai' }]);
       }
       await refreshSchedule(false);
+    } finally {
+      setIsBusy(false);
     }
   };
 
