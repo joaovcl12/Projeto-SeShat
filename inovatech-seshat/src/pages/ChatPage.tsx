@@ -327,17 +327,17 @@ const WeeklyScheduleDisplay = ({ schedule }: { schedule: WeeklySchedule & { type
   );
 };
 
-const PersistentMascot = ({ activeQuestion, onRequestHint, showHintOffer, onMascotClick, bubbleClass }: {
+const PersistentMascot = React.forwardRef<HTMLDivElement, {
   activeQuestion: Question | null,
   onRequestHint: (id: number) => void,
   showHintOffer: boolean,
-  onMascotClick: () => void
+  onMascotClick: () => void,
   bubbleClass: string
-}) => {
+}>(({ activeQuestion, onRequestHint, showHintOffer, onMascotClick, bubbleClass }, ref) => {
   const isQuestionActive = activeQuestion && !activeQuestion.disabled;
 
   return (
-    <div className={styles.mascotContainer}>
+    <div ref={ref} className={styles.mascotContainer}>
       {isQuestionActive && showHintOffer && (
         <div className={`${styles.floatingBubble} ${bubbleClass}`}>
           Precisa de uma ajudinha com essa questão?
@@ -355,7 +355,7 @@ const PersistentMascot = ({ activeQuestion, onRequestHint, showHintOffer, onMasc
       </div>
     </div>
   );
-};
+});
 
 const AnalysisDisplay = ({ data }: { data: AnalysisData }) => (
   <div className={`${styles.messageBubble} ${styles.ai}`}>
@@ -396,6 +396,8 @@ export function ChatPage() {
   const [bubbleClass, setBubbleClass] = useState('');
 
   const [isBusy, setIsBusy] = useState(false);
+
+  const mascotRef = useRef<HTMLDivElement>(null);
 
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -485,8 +487,43 @@ export function ChatPage() {
     return () => { };
   }, [currentQuestionIndex, questionList.length]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Se a bolha está visível E o clique foi FORA do container da mascote
+      if (
+        showHintOffer &&
+        mascotRef.current &&
+        !mascotRef.current.contains(event.target as Node)
+      ) {
+        // Inicia o fade-out e esconde (lógica de desativação)
+        setBubbleClass(styles['fade-out']);
+        setTimeout(() => {
+          setShowHintOffer(false);
+          setBubbleClass('');
+        }, 300);
+      }
+    };
+
+    // Adiciona o listener no documento inteiro
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      // Limpa o listener
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showHintOffer, mascotRef, setBubbleClass, setShowHintOffer, styles]);
+
   const handleMascotClick = () => {
-    if (activeQuestion && !activeQuestion.disabled && !showHintOffer) {
+    if (!activeQuestion || activeQuestion.disabled) {
+      return;
+    }
+
+    if (showHintOffer) {
+      setBubbleClass(styles['fade-out']);
+      setTimeout(() => {
+        setShowHintOffer(false);
+        setBubbleClass('');
+      }, 300);
+    } else {
       setShowHintOffer(true);
       setBubbleClass('');
     }
@@ -961,6 +998,7 @@ export function ChatPage() {
           showHintOffer={showHintOffer}
           onMascotClick={handleMascotClick}
           bubbleClass={bubbleClass}
+          ref={mascotRef}
         />
       </div>
     </div>
