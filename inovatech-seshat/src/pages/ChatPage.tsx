@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './ChatPage.module.css';
 import iaraImg from '/iara.png';
@@ -9,6 +9,8 @@ const getAuthToken = (): string | null => {
   return localStorage.getItem('authToken');
 };
 
+// TIPOS
+// ---
 type Message = { id: number; text: string; sender: 'user' | 'ai'; disabled?: boolean; };
 type MateriasResponse = { materias_disponiveis: string[]; };
 type Question = {
@@ -56,7 +58,47 @@ type ChatItem =
   | (Cronograma & { type: 'schedule' })
   | (WeeklySchedule & { type: 'weekly_schedule'; id: number })
   | (AnalysisData & { type: 'analysis'; id: number });
-const AiAvatar = () => (
+
+// FUNÇÃO HELPER PARA CHAMADAS DE API
+// ---
+async function apiCall<T>(
+  url: string,
+  method: string = 'GET',
+  body?: object,
+  token: string | null = getAuthToken()
+): Promise<T> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (response.status === 401) {
+    localStorage.removeItem('authToken');
+    throw new Error('401: Unauthorized'); // Para ser pego no handleApiError
+  }
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ detail: `Erro HTTP: ${response.status}` }));
+    throw new Error(errorData.detail || `Erro HTTP: ${response.status}`);
+  }
+
+  if (response.status === 204) { // No Content
+    return {} as T;
+  }
+
+  return response.json() as Promise<T>;
+}
+
+// COMPONENTES
+// ---
+const AiAvatar = React.memo(() => (
   <div className={`${styles.avatar} d-flex align-items-center justify-content-center overflow-hidden`}>
     <img
       src={iaraImg}
@@ -64,9 +106,9 @@ const AiAvatar = () => (
       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
     />
   </div>
-);
+));
 
-const Sidebar = ({ isOpen, onToggle, activeSubject, onSubjectClick, subjects, isBusy }: {
+const Sidebar = React.memo(({ isOpen, onToggle, activeSubject, onSubjectClick, subjects, isBusy }: {
   isOpen: boolean;
   onToggle: () => void;
   activeSubject: string;
@@ -77,11 +119,11 @@ const Sidebar = ({ isOpen, onToggle, activeSubject, onSubjectClick, subjects, is
   <div className={styles.glassPanel}>
     <div className={styles.sidebarHeader}>
       {isOpen && <h2 className="fs-5 fw-bold text-white mb-0">Matérias</h2>}
-      <button className={styles.toggleButton} onClick={onToggle}>
+      <button className={styles.toggleButton} onClick={onToggle} aria-label={isOpen ? 'Fechar Sidebar' : 'Abrir Sidebar'}>
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="bi bi-layout-sidebar-inset" viewBox="0 0 16 16"><path d="M14 2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h12zM2 1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H2z" /><path d="M3 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4z" /></svg>
       </button>
     </div>
-    {isOpen && (
+    {isOpen ? (
       <ul className={styles.sidebarList}>
         {subjects.map((subject) => (
           <li key={subject} className={`${styles.subjectItem} ${subject === activeSubject ? styles.active : ''} ${isBusy ? styles.disabled : ''} text-white-50`}
@@ -92,8 +134,7 @@ const Sidebar = ({ isOpen, onToggle, activeSubject, onSubjectClick, subjects, is
         ))}
         {subjects.length === 0 && <li className="text-white-50 p-3">Carregando matérias...</li>}
       </ul>
-    )}
-    {!isOpen && (
+    ) : (
       <ul className={styles.sidebarList} style={{ paddingTop: '2rem' }}>
         {subjects.map((subject) => (
           <li key={subject + '-icon'} title={subject} className={`${styles.subjectItem} ${subject === activeSubject ? styles.active : ''} ${isBusy ? styles.disabled : ''} justify-content-center`}
@@ -104,7 +145,7 @@ const Sidebar = ({ isOpen, onToggle, activeSubject, onSubjectClick, subjects, is
       </ul>
     )}
   </div>
-);
+));
 
 const ChatMessage = ({ msg }: { msg: Message }) => (
   <div className={`${styles.messageBubble} ${styles[msg.sender]}`}>
@@ -181,7 +222,7 @@ const ActionMenu = ({ onActionClick, isLast }: {
 );
 
 
-const AddTopicForm = ({ materiaId, onAddTopic }: {
+const AddTopicForm = React.memo(({ materiaId, onAddTopic }: {
   materiaId: number,
   onAddTopic: (materiaId: number, topicName: string) => void
 }) => {
@@ -202,12 +243,12 @@ const AddTopicForm = ({ materiaId, onAddTopic }: {
         onChange={(e) => setTopicName(e.target.value)}
         required
       />
-      <button type="submit" className="btn btn-outline-light btn-sm">Add</button>
+      <button type="submit" className="btn btn-outline-light btn-sm" aria-label="Adicionar Tópico">Add</button>
     </form>
   );
-};
+});
 
-const AddSubjectForm = ({ onAddSubject }: {
+const AddSubjectForm = React.memo(({ onAddSubject }: {
   onAddSubject: (subjectName: string) => void
 }) => {
   const [subjectName, setSubjectName] = useState("");
@@ -227,10 +268,10 @@ const AddSubjectForm = ({ onAddSubject }: {
         onChange={(e) => setSubjectName(e.target.value)}
         required
       />
-      <button type="submit" className="btn btn-primary btn-sm">Adicionar</button>
+      <button type="submit" className="btn btn-primary btn-sm" aria-label="Adicionar Matéria">Adicionar</button>
     </form>
   );
-};
+});
 
 const ScheduleDisplay = ({ schedule, onAddSubject, onAddTopic, onDeleteSubject, onDeleteTopic }: {
   schedule: Cronograma;
@@ -242,13 +283,13 @@ const ScheduleDisplay = ({ schedule, onAddSubject, onAddTopic, onDeleteSubject, 
   <div className={`${styles.messageBubble} ${styles.ai}`}>
     <AiAvatar />
     <div className={styles.messageContent}>
-      <h5 className="text-white mb-3">{schedule.nome}</h5>
+      <h5 className="text-white mb-3">✏️ {schedule.nome}</h5>
       {schedule.materias.length === 0 ? (<p className="text-white-50">Seu cronograma está vazio.</p>) : (
         schedule.materias.map(materia => (
           <div key={materia.id} className="mb-3 p-2 rounded" style={{ background: 'rgba(0,0,0,0.2)' }}>
             <div className="d-flex justify-content-between align-items-center">
               <h6 className="fw-bold mb-0">{materia.nome}</h6>
-              <button className="btn btn-sm btn-danger py-0 px-1" onClick={() => onDeleteSubject(materia.id)} title="Deletar matéria">
+              <button className="btn btn-sm btn-danger py-0 px-1" onClick={() => onDeleteSubject(materia.id)} title="Deletar matéria" aria-label={`Deletar matéria ${materia.nome}`}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-x-lg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" /></svg>
               </button>
             </div>
@@ -257,7 +298,7 @@ const ScheduleDisplay = ({ schedule, onAddSubject, onAddTopic, onDeleteSubject, 
                 {materia.topicos.map(topico => (
                   <li key={topico.id} className="d-flex justify-content-between align-items-center">
                     <span>{topico.concluido ? '✅' : '◻️'} {topico.nome}</span>
-                    <button className="btn btn-sm btn-outline-danger py-0 px-1" onClick={() => onDeleteTopic(topico.id)} title="Deletar tópico">
+                    <button className="btn btn-sm btn-outline-danger py-0 px-1" onClick={() => onDeleteTopic(topico.id)} title="Deletar tópico" aria-label={`Deletar tópico ${topico.nome}`}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" className="bi bi-x" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" /></svg>
                     </button>
                   </li>
@@ -294,7 +335,7 @@ const WeeklyScheduleDisplay = ({ schedule }: { schedule: WeeklySchedule & { type
       <div className={`${styles.messageBubble} ${styles.ai}`}>
         <AiAvatar />
         <div className={styles.messageContent}>
-          <h5 className="text-white mb-3">Plano de Estudos Semanal</h5>
+          <h5 className="text-white mb-3">📅 Plano de Estudos Semanal</h5>
           <p className="text-white-50">
             {detailPlan && 'detalhe' in detailPlan
               ? detailPlan.detalhe
@@ -311,7 +352,7 @@ const WeeklyScheduleDisplay = ({ schedule }: { schedule: WeeklySchedule & { type
     <div className={`${styles.messageBubble} ${styles.ai}`}>
       <AiAvatar />
       <div className={styles.messageContent}>
-        <h5 className="text-white mb-3">Seu Plano de Estudos Semanal</h5>
+        <h5 className="text-white mb-3">📅 Seu Plano de Estudos Semanal</h5>
         <ul className="list-unstyled mb-0">
           {Object.entries(dailyPlan).map(([dia, topico]) => (
             <li key={dia} className="mb-1">
@@ -327,7 +368,7 @@ const WeeklyScheduleDisplay = ({ schedule }: { schedule: WeeklySchedule & { type
   );
 };
 
-const PersistentMascot = React.forwardRef<HTMLDivElement, {
+const PersistentMascot = React.memo(React.forwardRef<HTMLDivElement, {
   activeQuestion: Question | null,
   onRequestHint: (id: number) => void,
   showHintOffer: boolean,
@@ -344,18 +385,19 @@ const PersistentMascot = React.forwardRef<HTMLDivElement, {
           <button
             className={styles.helpBtn}
             onClick={() => activeQuestion && onRequestHint(activeQuestion.id)}
+            aria-label="Sim, preciso de ajuda com a questão"
           >
             Sim, preciso de ajuda!!
           </button>
         </div>
       )}
 
-      <div className={styles.mascotImageWrapper} onClick={onMascotClick}>
+      <div className={styles.mascotImageWrapper} onClick={onMascotClick} role="button" tabIndex={0} aria-label="Mascote IAra para dicas">
         <img src={iaraImg} alt="IAra" className={styles.mascotImg} />
       </div>
     </div>
   );
-});
+}));
 
 const AnalysisDisplay = ({ data }: { data: AnalysisData }) => (
   <div className={`${styles.messageBubble} ${styles.ai}`}>
@@ -379,6 +421,8 @@ const AnalysisDisplay = ({ data }: { data: AnalysisData }) => (
   </div>
 );
 
+// COMPONENTE PRINCIPAL
+// ---
 export function ChatPage() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [subjectsList, setSubjectsList] = useState<string[]>([]);
@@ -388,22 +432,17 @@ export function ChatPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isMobileLayout] = useState(window.innerWidth <= 768);
   const [hintCounts, setHintCounts] = useState<Record<number, number>>({});
-
   const activeQuestion = questionList.length > 0 ? questionList[currentQuestionIndex] : null;
-
   const [showHintOffer, setShowHintOffer] = useState(false);
-
   const [bubbleClass, setBubbleClass] = useState('');
-
   const [isBusy, setIsBusy] = useState(false);
 
   const mascotRef = useRef<HTMLDivElement>(null);
-
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleApiError = (error: unknown) => {
+  const handleApiError = useCallback((error: unknown): boolean => {
     if (error instanceof Error) {
       if (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized')) {
         localStorage.removeItem('authToken');
@@ -412,7 +451,7 @@ export function ChatPage() {
       }
     }
     return false;
-  };
+  }, [navigate]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -425,20 +464,18 @@ export function ChatPage() {
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const response = await fetch(`${API_URL}/materias`);
-        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-        const data: MateriasResponse = await response.json();
+        const data = await apiCall<MateriasResponse>(`${API_URL}/materias`);
         const availableSubjects = data.materias_disponiveis || [];
         setSubjectsList(availableSubjects);
 
-        if (availableSubjects.length > 0) {
-          if (!isMobileLayout && !activeSubject && chatHistory.length === 0) {
+        if (availableSubjects.length > 0 && chatHistory.length === 0) {
+          if (!isMobileLayout) {
             const firstSubject = availableSubjects[0];
             setActiveSubject(firstSubject);
-            setChatHistory([{ id: 1, text: `Olá! Sou a IAra. Vamos começar com ${firstSubject}. O que gostaria de fazer?`, sender: 'ai' }, { id: 2, type: 'action_menu' }]);
-          } else if (isMobileLayout && chatHistory.length === 0) {
+            setChatHistory([{ id: Date.now(), text: `Olá! Sou a IAra. Vamos começar com ${firstSubject}. O que gostaria de fazer?`, sender: 'ai' }, { id: Date.now() + 1, type: 'action_menu' }]);
+          } else {
             setChatHistory([{
-              id: 1,
+              id: Date.now(),
               subject: "Matérias",
               text: "Olá! Sou a IAra, o que você quer estudar?",
               options: availableSubjects,
@@ -449,13 +486,15 @@ export function ChatPage() {
             setActiveSubject('');
           }
         } else if (chatHistory.length === 0) {
-          setChatHistory([{ id: 1, text: `Olá! Sou a IAra. Não encontrei matérias disponíveis no momento.`, sender: 'ai' }]);
+          setChatHistory([{ id: Date.now(), text: `Olá! Sou a IAra. Não encontrei matérias disponíveis no momento.`, sender: 'ai' }]);
         }
       } catch (error: unknown) {
         console.error("Falha ao buscar matérias:", error);
-        setSubjectsList([]);
-        if (chatHistory.length === 0) {
-          setChatHistory([{ id: 1, text: `Olá! Tive um problema para carregar as matérias. Tente recarregar a página.`, sender: 'ai' }]);
+        if (!handleApiError(error)) {
+          setSubjectsList([]);
+          if (chatHistory.length === 0) {
+            setChatHistory([{ id: Date.now(), text: `Olá! Tive um problema para carregar as matérias. Tente recarregar a página.`, sender: 'ai' }]);
+          }
         }
       }
     };
@@ -465,37 +504,28 @@ export function ChatPage() {
     if (getAuthToken() || isGuest) {
       fetchSubjects();
     }
-  }, [isMobileLayout, activeSubject, chatHistory.length, navigate, location.search]);
+  }, [isMobileLayout, chatHistory.length, handleApiError, location.search]);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatHistory]);
 
   useEffect(() => {
     setShowHintOffer(false);
-
-    if (questionList.length > 0 && currentQuestionIndex < questionList.length) {
-      const currentQuestion = questionList[currentQuestionIndex];
-
-      if (currentQuestion && !currentQuestion.disabled) {
-        const timer = setTimeout(() => {
-          setShowHintOffer(true);
-        }, 30000);
-
-        return () => clearTimeout(timer);
-      }
+    if (activeQuestion && !activeQuestion.disabled) {
+      const timer = setTimeout(() => {
+        setShowHintOffer(true);
+      }, 30000);
+      return () => clearTimeout(timer);
     }
-
     return () => { };
-  }, [currentQuestionIndex, questionList.length]);
+  }, [activeQuestion]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Se a bolha está visível E o clique foi FORA do container da mascote
       if (
         showHintOffer &&
         mascotRef.current &&
         !mascotRef.current.contains(event.target as Node)
       ) {
-        // Inicia o fade-out e esconde (lógica de desativação)
         setBubbleClass(styles['fade-out']);
         setTimeout(() => {
           setShowHintOffer(false);
@@ -504,15 +534,11 @@ export function ChatPage() {
       }
     };
 
-    // Adiciona o listener no documento inteiro
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      // Limpa o listener
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showHintOffer, mascotRef, setBubbleClass, setShowHintOffer, styles]);
+    return () => { document.removeEventListener("mousedown", handleClickOutside); };
+  }, [showHintOffer]);
 
-  const handleMascotClick = () => {
+  const handleMascotClick = useCallback(() => {
     if (!activeQuestion || activeQuestion.disabled) {
       return;
     }
@@ -527,15 +553,15 @@ export function ChatPage() {
       setShowHintOffer(true);
       setBubbleClass('');
     }
-  };
+  }, [activeQuestion, showHintOffer]);
 
-  const showNextQuestion = () => {
+  const showNextQuestion = useCallback(() => {
     const nextIndex = currentQuestionIndex + 1;
     if (nextIndex < questionList.length) {
       setCurrentQuestionIndex(nextIndex);
       setChatHistory(prev => [
         ...prev,
-        { ...questionList[nextIndex], type: 'question' }
+        { ...questionList[nextIndex], type: 'question', id: questionList[nextIndex].id }
       ]);
     } else {
       setQuestionList([]);
@@ -546,357 +572,23 @@ export function ChatPage() {
         { id: Date.now() + 3, type: 'action_menu' }
       ]);
     }
-  };
+  }, [currentQuestionIndex, questionList]);
 
-  const handleAnswerSelect = async (selectedOptionKey: string) => {
-    if (showHintOffer) {
-      setBubbleClass(styles['fade-out']);
-      setTimeout(() => {
-        setShowHintOffer(false);
-        setBubbleClass('');
-      }, 300);
-    } else {
-      setShowHintOffer(false);
-    }
-
-    const currentQuestion = questionList[currentQuestionIndex];
-
-    const questionItemIndex = chatHistory.findIndex(item =>
-      'type' in item && item.type === 'question' && item.disabled !== true
-    );
-
-    if (questionItemIndex === -1) return;
-
-    const questionItem = chatHistory[questionItemIndex];
-
-    if ('type' in questionItem && questionItem.type === 'question' && Array.isArray(questionItem.options) && questionItem.subject === "Matérias") {
-
-      const selectedSubject = questionItem.options[parseInt(selectedOptionKey)];
-      const userMessage: Message = { id: Date.now(), text: `Quero estudar: ${selectedSubject}`, sender: 'user' };
-
-      const updatedHistory = [...chatHistory];
-      const itemToDisable = { ...questionItem, disabled: true };
-      updatedHistory[questionItemIndex] = itemToDisable as ChatItem;
-      setChatHistory(updatedHistory);
-      setChatHistory(prev => [...prev, userMessage]);
-      handleSubjectClick(selectedSubject);
-      return;
-    }
-
-
-    if (!currentQuestion) return;
-
-    const updatedHistory = [...chatHistory];
-    const itemToDisable = { ...questionItem, disabled: true };
-    updatedHistory[questionItemIndex] = itemToDisable as ChatItem;
-    setChatHistory(updatedHistory);
-
-
-    const answerText = Array.isArray(currentQuestion.options)
-      ? currentQuestion.options[parseInt(selectedOptionKey)]
-      : currentQuestion.options[selectedOptionKey];
-    const userMessage: Message = { id: Date.now(), text: `Minha resposta: ${selectedOptionKey}. ${answerText}`, sender: 'user' };
-    setChatHistory(prev => [...prev, userMessage, { id: Date.now() + 1, text: `Resposta "${selectedOptionKey}" recebida. Verificando...`, sender: 'ai' }]);
-
-    const token = getAuthToken();
-    if (!token) { setChatHistory(prev => [...prev, { id: Date.now() + 2, text: 'Erro de autenticação. Por favor, faça login para verificar suas respostas.', sender: 'ai' }]); return; }
-
-    try {
-      const response = await fetch(`${API_URL}/perguntas/verificar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ question_id: currentQuestion.id, user_answer: selectedOptionKey })
-      });
-      if (response.status === 401) { handleApiError(new Error('401')); return; }
-      if (!response.ok) throw new Error('Falha ao verificar a resposta.');
-      const result: AnswerCheckResponse = await response.json();
-      let feedbackMessage: Message;
-      if (result.is_correct) {
-        feedbackMessage = { id: Date.now() + 2, text: 'Parabéns, resposta correta! 🎉', sender: 'ai' };
-      } else {
-        feedbackMessage = { id: Date.now() + 2, text: `Incorreto. A resposta correta era: ${result.correct_answer}`, sender: 'ai' };
-      }
-      setChatHistory(prev => [...prev, feedbackMessage]);
-      setTimeout(showNextQuestion, 2000);
-    } catch (error: unknown) {
-      console.error('Erro ao verificar resposta:', error);
-      if (error instanceof Error) {
-        setChatHistory(prev => [...prev, { id: Date.now() + 2, text: `Desculpe, tive um problema ao verificar sua resposta: ${error.message}`, sender: 'ai' }]);
-      } else { setChatHistory(prev => [...prev, { id: Date.now() + 2, text: 'Desculpe, tive um problema desconhecido ao verificar sua resposta.', sender: 'ai' }]); }
-    }
-  };
-
-  const handleRequestHint = async (questionId: number) => {
-    const token = getAuthToken();
-    if (!token) return;
-
-    setIsBusy(true);
-
-    const currentLevel = hintCounts[questionId] || 0;
-    const nextLevel = Math.min(currentLevel + 1, 3);
-
-    setHintCounts(prev => ({ ...prev, [questionId]: nextLevel }));
-
-    setChatHistory(prev => [...prev, { id: Date.now() + 1, text: "Pensando...", sender: 'ai' }]);
-
-    try {
-      const response = await fetch(`${API_URL}/ia/dica`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ question_id: questionId, level: nextLevel })
-      });
-
-      if (response.status === 401) { handleApiError(new Error('401')); return; }
-      if (!response.ok) throw new Error("Erro ao gerar dica");
-
-      const data = await response.json();
-
-      setChatHistory(prev => [
-        ...prev.filter(m => !('text' in m) || m.text !== "Pensando..."),
-        { id: Date.now() + 2, text: `💡 Dica (${nextLevel}/3): ${data.dica}`, sender: 'ai' }
-      ]);
-
-    } catch {
-      setChatHistory(prev => [
-        ...prev.filter(m => !('text' in m) || m.text !== "Pensando..."),
-        { id: Date.now() + 2, text: "Desculpe, não consegui gerar uma dica agora.", sender: 'ai' }
-      ]);
-    } finally {
-      setIsBusy(false);
-    }
-  };
-
-  const fetchQuestions = async (subject: string) => {
-    setChatHistory(prev => [...prev, { id: Date.now(), text: `Certo! Buscando 10 questões de ${subject}...`, sender: 'ai' }]);
-    setQuestionList([]);
-    setCurrentQuestionIndex(0);
-    try {
-      const response = await fetch(`${API_URL}/perguntas/${subject}?count=10`);
-      if (!response.ok) {
-        if (response.status === 404) { setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Desculpe, ainda não tenho questões de ${subject} no banco de dados.`, sender: 'ai' }]); return; }
-        throw new Error(`Erro HTTP: ${response.status}`);
-      }
-      const data: Question[] = await response.json();
-      if (data.length === 0) { setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Desculpe, não encontrei nenhuma questão de ${subject} no banco de dados.`, sender: 'ai' }]); return; }
-      setQuestionList(data);
-      setCurrentQuestionIndex(0);
-      setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Encontrei ${data.length} questões. Vamos começar!`, sender: 'ai' }, { ...data[0], type: 'question' }]);
-    } catch (error: unknown) {
-      console.error("Erro ao buscar questões:", error);
-      if (error instanceof Error) {
-        setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Desculpe, tive um problema ao buscar as questões: ${error.message}`, sender: 'ai' }]);
-      } else { setChatHistory(prev => [...prev, { id: Date.now() + 1, text: 'Desculpe, tive um problema desconhecido ao buscar as questões.', sender: 'ai' }]); }
-    }
-  };
-
-  const refreshSchedule = async (showLoadingMsg: boolean = true) => {
-    const token = getAuthToken();
-    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação. Por favor, faça login para editar o cronograma.', sender: 'ai' }]); return; }
-    if (showLoadingMsg) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Buscando seu cronograma...', sender: 'ai' }]); }
-    try {
-      const response = await fetch(`${API_URL}/cronograma/me`, { headers: { 'Authorization': `Bearer ${token}` } });
-      if (response.status === 401) { handleApiError(new Error('401')); return; }
-      if (!response.ok) throw new Error('Não foi possível buscar o cronograma.');
-      const cronogramaData: Cronograma = await response.json();
-      setChatHistory(prev => [
-        ...prev.filter(item =>
-          !('type' in item && item.type === 'schedule') &&
-          !('sender' in item && item.sender === 'ai' && (item.text === 'Buscando seu cronograma...' || item.text.startsWith('Adicionando') || item.text.startsWith('Deletando')))
-        ),
-        { ...cronogramaData, type: 'schedule', id: cronogramaData.id }
-      ]);
-    } catch (error: unknown) {
-      console.error('Erro ao buscar cronograma:', error);
-      if (error instanceof Error && !error.message.includes('401')) { setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Desculpe, tive um problema ao atualizar seu cronograma: ${error.message}`, sender: 'ai' }]); }
-    }
-  };
-
-  const handleAddNewSubject = async (subjectName: string) => {
-    if (!subjectName.trim()) return;
-    const token = getAuthToken();
-    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação. Por favor, faça login para adicionar matérias.', sender: 'ai' }]); return; }
-    setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Adicionando matéria...', sender: 'ai' }]);
-    try {
-      const response = await fetch(`${API_URL}/cronograma/materias`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ nome: subjectName })
-      });
-      if (response.status === 401) { handleApiError(new Error('401')); return; }
-      if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || "Falha ao adicionar matéria."); }
-      await refreshSchedule(false);
-    } catch (error: unknown) {
-      if (error instanceof Error && !error.message.includes('401')) { setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${error.message}`, sender: 'ai' }]); }
-      await refreshSchedule(false);
-    }
-  };
-
-  const handleAddNewTopic = async (materiaId: number, topicName: string) => {
-    if (!topicName.trim()) return;
-    const token = getAuthToken();
-    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação. Por favor, faça login para adicionar tópicos.', sender: 'ai' }]); return; }
-    setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Adicionando tópico...', sender: 'ai' }]);
-    try {
-      const response = await fetch(`${API_URL}/cronograma/materias/${materiaId}/topicos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ nome: topicName })
-      });
-      if (response.status === 401) { handleApiError(new Error('401')); return; }
-      if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || "Falha ao adicionar tópico."); }
-      await refreshSchedule(false);
-    } catch (error: unknown) {
-      if (error instanceof Error && !error.message.includes('401')) { setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${error.message}`, sender: 'ai' }]); }
-      await refreshSchedule(false);
-    }
-  };
-
-  const handleDeleteSubject = async (materiaId: number) => {
-    if (!window.confirm("Tem certeza que quer deletar esta matéria e todos os seus tópicos?")) return;
-    const token = getAuthToken();
-    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação.', sender: 'ai' }]); return; }
-    setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Deletando matéria...', sender: 'ai' }]);
-    try {
-      const response = await fetch(`${API_URL}/cronograma/materias/${materiaId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.status === 401) { handleApiError(new Error('401')); return; }
-      if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || "Falha ao deletar matéria."); }
-      await refreshSchedule(false);
-    } catch (error: unknown) {
-      if (error instanceof Error && !error.message.includes('401')) { setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${error.message}`, sender: 'ai' }]); }
-      await refreshSchedule(false);
-    }
-  };
-
-  const handleDeleteTopic = async (topicoId: number) => {
-    if (!window.confirm("Tem certeza que quer deletar este tópico?")) return;
-    const token = getAuthToken();
-    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação.', sender: 'ai' }]); return; }
-    setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Deletando tópico...', sender: 'ai' }]);
-    try {
-      const response = await fetch(`${API_URL}/cronograma/topicos/${topicoId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.status === 401) { handleApiError(new Error('401')); return; }
-      if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || "Falha ao deletar tópico."); }
-      await refreshSchedule(false);
-    } catch (error: unknown) {
-      if (error instanceof Error && !error.message.includes('401')) { setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${error.message}`, sender: 'ai' }]); }
-      await refreshSchedule(false);
-    }
-  };
-
-  const fetchWeeklySchedule = async () => {
-    const token = getAuthToken();
-    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação.', sender: 'ai' }]); return; }
-    setChatHistory(prev => [...prev, { id: Date.now(), text: 'Gerando seu plano de estudos semanal...', sender: 'ai' }]);
-    try {
-      const response = await fetch(`${API_URL}/cronograma/me/semanal`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.status === 401) { handleApiError(new Error('401')); return; }
-      if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || "Falha ao gerar plano."); }
-
-      const weeklyScheduleData: WeeklyScheduleResponse = await response.json();
-
-      setChatHistory(prev => [
-        ...prev,
-        { plan: weeklyScheduleData, type: 'weekly_schedule', id: Date.now() }
-      ]);
-    } catch (error: unknown) {
-      if (error instanceof Error && !error.message.includes('401')) {
-        setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${error.message}`, sender: 'ai' }]);
-      }
-    }
-  };
-
-  const fetchPerformanceAnalysis = async () => {
-    const token = getAuthToken();
-    if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação.', sender: 'ai' }]); return; }
-
-    setChatHistory(prev => [...prev, { id: Date.now(), text: 'Certo, vou analisar seu desempenho...', sender: 'ai' }]);
-
-    try {
-      const response = await fetch(`${API_URL}/ia/analise-erros`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (response.status === 401) { handleApiError(new Error('401')); return; }
-      if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.detail || "Falha na análise."); }
-
-      const analysisData: AnalysisData = await response.json();
-
-      setChatHistory(prev => [
-        ...prev.filter(m => !('text' in m) || m.text !== 'Certo, vou analisar seu desempenho...'),
-        { ...analysisData, type: 'analysis', id: Date.now() }
-      ]);
-
-    } catch (error: unknown) {
-      if (error instanceof Error && !error.message.includes('401')) {
-        setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro ao analisar: ${error.message}`, sender: 'ai' }]);
-      }
-    }
-  };
-
-  const handleActionClick = async (action: 'get_questions' | 'edit_schedule' | 'get_weekly_schedule' | 'analyze_performance') => {
-    const params = new URLSearchParams(location.search);
-    const isGuest = params.get('guest') === 'true';
-    const token = getAuthToken();
-
-    if (isGuest && (!token) && (action === 'edit_schedule' || action === 'get_weekly_schedule' || action === 'get_questions')) {
-      setChatHistory(prev => [...prev, { id: Date.now(), text: `Esta funcionalidade requer que você esteja conectado a uma conta.`, sender: 'ai' }]);
-      return;
-    }
-
-    const lastItemIndex = chatHistory.length - 1;
-    const lastItem = chatHistory[lastItemIndex];
-    if (lastItem && 'type' in lastItem && lastItem.type === 'action_menu') {
-      const updatedHistory = [...chatHistory];
-      const itemToDisable = { ...lastItem, disabled: true };
-      updatedHistory[lastItemIndex] = itemToDisable as ChatItem;
-      setChatHistory(updatedHistory);
-    }
-
-    if (action === 'get_questions') {
-      fetchQuestions(activeSubject);
-    }
-    if (action === 'edit_schedule') {
-      await refreshSchedule();
-    }
-    if (action === 'get_weekly_schedule') {
-      await fetchWeeklySchedule();
-    }
-    if (action === 'analyze_performance') {
-      await fetchPerformanceAnalysis();
-    }
-  };
-
-  const handleSubjectClick = (subject: string) => {
+  const handleSubjectClick = useCallback((subject: string) => {
     const proceedWithSubjectChange = () => {
       setQuestionList([]);
       setCurrentQuestionIndex(0);
 
       setChatHistory(prevHistory => {
         const historyCopy = [...prevHistory];
-
         let lastActiveQuestionIndex = -1;
+
         for (let i = historyCopy.length - 1; i >= 0; i--) {
           const item = historyCopy[i];
           if ('type' in item && item.type === 'question' && item.disabled !== true) {
             lastActiveQuestionIndex = i;
             break;
           }
-        }
-
-        if (lastActiveQuestionIndex !== -1) {
-          const itemToDisable = historyCopy[lastActiveQuestionIndex];
-          historyCopy[lastActiveQuestionIndex] = { ...itemToDisable, disabled: true } as ChatItem;
         }
 
         if (lastActiveQuestionIndex !== -1) {
@@ -920,18 +612,274 @@ export function ChatPage() {
 
     if (showHintOffer) {
       setBubbleClass(styles['fade-out']);
-
       setTimeout(() => {
         setShowHintOffer(false);
         setBubbleClass('');
         proceedWithSubjectChange();
       }, 300);
+      return;
+    }
+    proceedWithSubjectChange();
+  }, [showHintOffer]);
 
+  const handleAnswerSelect = async (selectedOptionKey: string) => {
+    if (showHintOffer) {
+      setBubbleClass(styles['fade-out']);
+      setTimeout(() => {
+        setShowHintOffer(false);
+        setBubbleClass('');
+      }, 300);
+    } else {
+      setShowHintOffer(false);
+    }
+
+    const currentQuestion = questionList[currentQuestionIndex];
+    const questionItemIndex = chatHistory.findIndex(item =>
+      'type' in item && item.type === 'question' && item.disabled !== true
+    );
+
+    if (questionItemIndex === -1) return;
+    const questionItem = chatHistory[questionItemIndex];
+
+
+    if ('type' in questionItem && questionItem.type === 'question' && Array.isArray(questionItem.options) && questionItem.subject === "Matérias") {
+      const selectedSubject = questionItem.options[parseInt(selectedOptionKey)];
+      const userMessage: Message = { id: Date.now(), text: `Quero estudar: ${selectedSubject}`, sender: 'user' };
+
+      const updatedHistory = [...chatHistory];
+      updatedHistory[questionItemIndex] = { ...questionItem, disabled: true } as ChatItem;
+      setChatHistory(updatedHistory);
+      setChatHistory(prev => [...prev, userMessage]);
+      handleSubjectClick(selectedSubject);
       return;
     }
 
-    proceedWithSubjectChange();
+    if (!currentQuestion) return;
+
+    const updatedHistory = [...chatHistory];
+    updatedHistory[questionItemIndex] = { ...questionItem, disabled: true } as ChatItem;
+    setChatHistory(updatedHistory);
+
+    const answerText = Array.isArray(currentQuestion.options)
+      ? currentQuestion.options[parseInt(selectedOptionKey)]
+      : currentQuestion.options[selectedOptionKey];
+    const userMessage: Message = { id: Date.now(), text: `Minha resposta: ${selectedOptionKey}. ${answerText}`, sender: 'user' };
+    setChatHistory(prev => [...prev, userMessage, { id: Date.now() + 1, text: `Resposta "${selectedOptionKey}" recebida. Verificando...`, sender: 'ai' }]);
+
+    try {
+      const result = await apiCall<AnswerCheckResponse>(`${API_URL}/perguntas/verificar`, 'POST', { question_id: currentQuestion.id, user_answer: selectedOptionKey });
+      let feedbackMessage: Message;
+      if (result.is_correct) {
+        feedbackMessage = { id: Date.now() + 2, text: 'Parabéns, resposta correta! 🎉', sender: 'ai' };
+      } else {
+        feedbackMessage = { id: Date.now() + 2, text: `Incorreto. A resposta correta era: ${result.correct_answer}`, sender: 'ai' };
+      }
+      setChatHistory(prev => [...prev, feedbackMessage]);
+      setTimeout(showNextQuestion, 2000);
+    } catch (error: unknown) {
+      console.error('Erro ao verificar resposta:', error);
+      if (!handleApiError(error)) {
+        const errorMessage = error instanceof Error ? error.message : 'problema desconhecido ao verificar sua resposta.';
+        setChatHistory(prev => [...prev, { id: Date.now() + 2, text: `Desculpe, tive um problema ao verificar sua resposta: ${errorMessage}`, sender: 'ai' }]);
+      }
+    }
   };
+
+  const handleRequestHint = async (questionId: number) => {
+    setIsBusy(true);
+
+    const currentLevel = hintCounts[questionId] || 0;
+    const nextLevel = Math.min(currentLevel + 1, 3);
+
+    setHintCounts(prev => ({ ...prev, [questionId]: nextLevel }));
+
+    setChatHistory(prev => [...prev, { id: Date.now() + 1, text: "Pensando...", sender: 'ai' }]);
+
+    try {
+      const data = await apiCall<{ dica: string }>(`${API_URL}/ia/dica`, 'POST', { question_id: questionId, level: nextLevel });
+
+      setChatHistory(prev => [
+        ...prev.filter(m => !('text' in m) || m.text !== "Pensando..."),
+        { id: Date.now() + 2, text: `💡 Dica (${nextLevel}/3): ${data.dica}`, sender: 'ai' }
+      ]);
+    } catch (error: unknown) {
+      if (!handleApiError(error)) {
+        setChatHistory(prev => [
+          ...prev.filter(m => !('text' in m) || m.text !== "Pensando..."),
+          { id: Date.now() + 2, text: "Desculpe, não consegui gerar uma dica agora.", sender: 'ai' }
+        ]);
+      }
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const fetchQuestions = async (subject: string) => {
+    setChatHistory(prev => [...prev, { id: Date.now(), text: `Certo! Buscando 10 questões de ${subject}...`, sender: 'ai' }]);
+    setQuestionList([]);
+    setCurrentQuestionIndex(0);
+    try {
+      const data = await apiCall<Question[]>(`${API_URL}/perguntas/${subject}?count=10`);
+      if (data.length === 0) {
+        setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Desculpe, não encontrei nenhuma questão de ${subject} no banco de dados.`, sender: 'ai' }]);
+        return;
+      }
+      setQuestionList(data);
+      setCurrentQuestionIndex(0);
+      setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Encontrei ${data.length} questões. Vamos começar!`, sender: 'ai' }, { ...data[0], type: 'question', id: data[0].id }]);
+    } catch (error: unknown) {
+      console.error("Erro ao buscar questões:", error);
+      if (!handleApiError(error)) {
+        const errorMessage = error instanceof Error ? error.message : 'problema desconhecido ao buscar as questões.';
+        setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Desculpe, tive um problema ao buscar as questões: ${errorMessage}`, sender: 'ai' }]);
+      }
+    }
+  };
+
+  const refreshSchedule = async (showLoadingMsg: boolean = true) => {
+    if (showLoadingMsg) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Buscando seu cronograma...', sender: 'ai' }]); }
+    try {
+      const cronogramaData = await apiCall<Cronograma>(`${API_URL}/cronograma/me`);
+      setChatHistory(prev => [
+        ...prev.filter(item =>
+          !('type' in item && item.type === 'schedule') &&
+          !('sender' in item && item.sender === 'ai' && (item.text === 'Buscando seu cronograma...' || item.text.startsWith('Adicionando') || item.text.startsWith('Deletando')))
+        ),
+        { ...cronogramaData, type: 'schedule', id: cronogramaData.id }
+      ]);
+    } catch (error: unknown) {
+      console.error('Erro ao buscar cronograma:', error);
+      if (!handleApiError(error)) {
+        const errorMessage = error instanceof Error ? error.message : 'problema desconhecido ao atualizar seu cronograma.';
+        setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Desculpe, tive um problema ao atualizar seu cronograma: ${errorMessage}`, sender: 'ai' }]);
+      }
+    }
+  };
+
+  const handleAddNewSubject = async (subjectName: string) => {
+    if (!subjectName.trim()) return;
+    setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Adicionando matéria...', sender: 'ai' }]);
+    try {
+      await apiCall(`${API_URL}/cronograma/materias`, 'POST', { nome: subjectName });
+      await refreshSchedule(false);
+    } catch (error: unknown) {
+      if (!handleApiError(error)) {
+        const errorMessage = error instanceof Error ? error.message : 'problema desconhecido ao adicionar matéria.';
+        setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${errorMessage}`, sender: 'ai' }]);
+      }
+      await refreshSchedule(false);
+    }
+  };
+
+  const handleAddNewTopic = async (materiaId: number, topicName: string) => {
+    if (!topicName.trim()) return;
+    setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Adicionando tópico...', sender: 'ai' }]);
+    try {
+      await apiCall(`${API_URL}/cronograma/materias/${materiaId}/topicos`, 'POST', { nome: topicName });
+      await refreshSchedule(false);
+    } catch (error: unknown) {
+      if (!handleApiError(error)) {
+        const errorMessage = error instanceof Error ? error.message : 'problema desconhecido ao adicionar tópico.';
+        setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${errorMessage}`, sender: 'ai' }]);
+      }
+      await refreshSchedule(false);
+    }
+  };
+
+  const handleDeleteSubject = async (materiaId: number) => {
+    if (!window.confirm("Tem certeza que quer deletar esta matéria e todos os seus tópicos?")) return;
+    setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Deletando matéria...', sender: 'ai' }]);
+    try {
+      await apiCall(`${API_URL}/cronograma/materias/${materiaId}`, 'DELETE');
+      await refreshSchedule(false);
+    } catch (error: unknown) {
+      if (!handleApiError(error)) {
+        const errorMessage = error instanceof Error ? error.message : 'problema desconhecido ao deletar matéria.';
+        setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${errorMessage}`, sender: 'ai' }]);
+      }
+      await refreshSchedule(false);
+    }
+  };
+
+  const handleDeleteTopic = async (topicoId: number) => {
+    if (!window.confirm("Tem certeza que quer deletar este tópico?")) return;
+    setChatHistory(prev => [...prev.filter(item => !('type' in item && item.type === 'schedule')), { id: Date.now(), text: 'Deletando tópico...', sender: 'ai' }]);
+    try {
+      await apiCall(`${API_URL}/cronograma/topicos/${topicoId}`, 'DELETE');
+      await refreshSchedule(false);
+    } catch (error: unknown) {
+      if (!handleApiError(error)) {
+        const errorMessage = error instanceof Error ? error.message : 'problema desconhecido ao deletar tópico.';
+        setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${errorMessage}`, sender: 'ai' }]);
+      }
+      await refreshSchedule(false);
+    }
+  };
+
+  const fetchWeeklySchedule = async () => {
+    setChatHistory(prev => [...prev, { id: Date.now(), text: 'Gerando seu plano de estudos semanal...', sender: 'ai' }]);
+    try {
+      const weeklyScheduleData = await apiCall<WeeklyScheduleResponse>(`${API_URL}/cronograma/me/semanal`);
+      setChatHistory(prev => [
+        ...prev,
+        { plan: weeklyScheduleData, type: 'weekly_schedule', id: Date.now() }
+      ]);
+    } catch (error: unknown) {
+      if (!handleApiError(error)) {
+        const errorMessage = error instanceof Error ? error.message : 'problema desconhecido ao gerar plano.';
+        setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${errorMessage}`, sender: 'ai' }]);
+      }
+    }
+  };
+
+  const fetchPerformanceAnalysis = async () => {
+    setChatHistory(prev => [...prev, { id: Date.now(), text: 'Certo, vou analisar seu desempenho...', sender: 'ai' }]);
+    try {
+      const analysisData = await apiCall<AnalysisData>(`${API_URL}/ia/analise-erros`);
+      setChatHistory(prev => [
+        ...prev.filter(m => !('text' in m) || m.text !== 'Certo, vou analisar seu desempenho...'),
+        { ...analysisData, type: 'analysis', id: Date.now() }
+      ]);
+    } catch (error: unknown) {
+      if (!handleApiError(error)) {
+        const errorMessage = error instanceof Error ? error.message : 'problema desconhecido ao analisar desempenho.';
+        setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro ao analisar: ${errorMessage}`, sender: 'ai' }]);
+      }
+    }
+  };
+
+  const handleActionClick = useCallback(async (action: 'get_questions' | 'edit_schedule' | 'get_weekly_schedule' | 'analyze_performance') => {
+    const params = new URLSearchParams(location.search);
+    const isGuest = params.get('guest') === 'true';
+    const token = getAuthToken();
+
+    if (isGuest && (!token) && (action === 'edit_schedule' || action === 'get_weekly_schedule' || action === 'get_questions' || action === 'analyze_performance')) {
+      setChatHistory(prev => [...prev, { id: Date.now(), text: `Esta funcionalidade requer que você esteja conectado a uma conta.`, sender: 'ai' }]);
+      return;
+    }
+
+    setChatHistory(prevHistory => {
+      const lastItemIndex = prevHistory.length - 1;
+      const lastItem = prevHistory[lastItemIndex];
+      if (lastItem && 'type' in lastItem && lastItem.type === 'action_menu') {
+        const updatedHistory = [...prevHistory];
+        updatedHistory[lastItemIndex] = { ...lastItem, disabled: true } as ChatItem;
+        return updatedHistory;
+      }
+      return prevHistory;
+    });
+
+    if (action === 'get_questions') {
+      if (activeSubject) {
+        fetchQuestions(activeSubject);
+      } else {
+        setChatHistory(prev => [...prev, { id: Date.now(), text: 'Por favor, selecione uma matéria para começar a responder questões.', sender: 'ai' }]);
+      }
+    }
+    if (action === 'edit_schedule') { await refreshSchedule(); }
+    if (action === 'get_weekly_schedule') { await fetchWeeklySchedule(); }
+    if (action === 'analyze_performance') { await fetchPerformanceAnalysis(); }
+  }, [activeSubject, location.search]);
 
   return (
     <div className={styles.chatPageContainer}>
@@ -952,13 +900,14 @@ export function ChatPage() {
         <main className={styles.messageList}>
           {chatHistory.map((item, index) => {
             const isLastItem = index === chatHistory.length - 1;
+            const key = item.id ? item.id : index;
 
             if ('sender' in item) {
-              return <ChatMessage key={item.id || index} msg={item} />
+              return <ChatMessage key={key} msg={item} />
             }
             if (item.type === 'question') {
               return <QuestionDisplay
-                key={item.id || index}
+                key={key}
                 question={item}
                 onAnswerSelect={handleAnswerSelect}
                 isBusy={isBusy}
@@ -966,14 +915,14 @@ export function ChatPage() {
             }
             if (item.type === 'action_menu') {
               return <ActionMenu
-                key={item.id || index}
+                key={key}
                 onActionClick={handleActionClick}
                 isLast={isLastItem}
               />
             }
             if (item.type === 'schedule') {
               return <ScheduleDisplay
-                key={item.id || index}
+                key={key}
                 schedule={item}
                 onAddSubject={handleAddNewSubject}
                 onAddTopic={handleAddNewTopic}
@@ -982,10 +931,10 @@ export function ChatPage() {
               />
             }
             if (item.type === 'weekly_schedule') {
-              return <WeeklyScheduleDisplay key={item.id || index} schedule={item} />
+              return <WeeklyScheduleDisplay key={key} schedule={item} />
             }
             if (item.type === 'analysis') {
-              return <AnalysisDisplay key={item.id || index} data={item} />
+              return <AnalysisDisplay key={key} data={item} />
             }
             return null;
           })}
