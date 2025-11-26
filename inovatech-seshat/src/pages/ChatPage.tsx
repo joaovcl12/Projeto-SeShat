@@ -667,6 +667,7 @@ export function ChatPage() {
     setChatHistory(prev => [...prev, userMessage, { id: Date.now() + 1, text: `Resposta "${selectedOptionKey}" recebida. Verificando...`, sender: 'ai' }]);
 
     try {
+      setIsBusy(true);
       const result = await apiCall<AnswerCheckResponse>(`${API_URL}/perguntas/verificar`, 'POST', { question_id: currentQuestion.id, user_answer: selectedOptionKey });
       let feedbackMessage: Message;
       if (result.is_correct) {
@@ -682,6 +683,8 @@ export function ChatPage() {
         const errorMessage = error instanceof Error ? error.message : 'problema desconhecido ao verificar sua resposta.';
         setChatHistory(prev => [...prev, { id: Date.now() + 2, text: `Desculpe, tive um problema ao verificar sua resposta: ${errorMessage}`, sender: 'ai' }]);
       }
+    } finally {
+      setIsBusy(false);
     }
   };
 
@@ -715,6 +718,7 @@ export function ChatPage() {
   };
 
   const fetchQuestions = async (subject: string) => {
+    setIsBusy(true)
     setChatHistory(prev => [...prev, { id: Date.now(), text: `Certo! Buscando 10 questões de ${subject}...`, sender: 'ai' }]);
     setQuestionList([]);
     setCurrentQuestionIndex(0);
@@ -733,10 +737,13 @@ export function ChatPage() {
         const errorMessage = error instanceof Error ? error.message : 'problema desconhecido ao buscar as questões.';
         setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Desculpe, tive um problema ao buscar as questões: ${errorMessage}`, sender: 'ai' }]);
       }
+    } finally {
+      setIsBusy(false);
     }
   };
 
   const refreshSchedule = async (showLoadingMsg: boolean = true) => {
+    setIsBusy(true);
     if (showLoadingMsg) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Buscando seu cronograma...', sender: 'ai' }]); }
     try {
       const cronogramaData = await apiCall<Cronograma>(`${API_URL}/cronograma/me`);
@@ -753,6 +760,8 @@ export function ChatPage() {
         const errorMessage = error instanceof Error ? error.message : 'problema desconhecido ao atualizar seu cronograma.';
         setChatHistory(prev => [...prev, { id: Date.now() + 1, text: `Desculpe, tive um problema ao atualizar seu cronograma: ${errorMessage}`, sender: 'ai' }]);
       }
+    } finally {
+      setIsBusy(false);
     }
   };
 
@@ -817,6 +826,7 @@ export function ChatPage() {
   };
 
   const fetchWeeklySchedule = async () => {
+    setIsBusy(true);
     setChatHistory(prev => [...prev, { id: Date.now(), text: 'Gerando seu plano de estudos semanal...', sender: 'ai' }]);
     try {
       const weeklyScheduleData = await apiCall<WeeklyScheduleResponse>(`${API_URL}/cronograma/me/semanal`);
@@ -829,10 +839,13 @@ export function ChatPage() {
         const errorMessage = error instanceof Error ? error.message : 'problema desconhecido ao gerar plano.';
         setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro: ${errorMessage}`, sender: 'ai' }]);
       }
+    } finally {
+      setIsBusy(false);
     }
   };
 
   const fetchPerformanceAnalysis = async () => {
+    setIsBusy(true);
     setChatHistory(prev => [...prev, { id: Date.now(), text: 'Certo, vou analisar seu desempenho...', sender: 'ai' }]);
     try {
       const analysisData = await apiCall<AnalysisData>(`${API_URL}/ia/analise-erros`);
@@ -845,6 +858,8 @@ export function ChatPage() {
         const errorMessage = error instanceof Error ? error.message : 'problema desconhecido ao analisar desempenho.';
         setChatHistory(prev => [...prev, { id: Date.now(), text: `Erro ao analisar: ${errorMessage}`, sender: 'ai' }]);
       }
+    } finally {
+      setIsBusy(false);
     }
   };
 
