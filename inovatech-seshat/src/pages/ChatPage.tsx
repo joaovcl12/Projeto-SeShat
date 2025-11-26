@@ -703,7 +703,7 @@ export function ChatPage() {
 
       setChatHistory(prev => [
         ...prev.filter(m => !('text' in m) || m.text !== "Pensando..."),
-        { id: Date.now() + 2, text: `💡 Dica (${nextLevel}/3): ${data.dica}`, sender: 'ai' }
+        { id: Date.now() + 2, text: `${data.dica}`, sender: 'ai' }
       ]);
     } catch (error: unknown) {
       if (!handleApiError(error)) {
