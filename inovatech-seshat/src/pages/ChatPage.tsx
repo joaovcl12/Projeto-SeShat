@@ -173,7 +173,7 @@ const ActionMenu = ({ onActionClick, isLast }: {
           Gerar Plano Semanal
         </button>
         <button className="btn btn-info text-white fw-bold" onClick={() => onActionClick('analyze_performance')} disabled={!isLast}>
-          Analisar meu Desempenho (IA)
+          Analisar meu Desempenho
         </button>
       </div>
     </div>
