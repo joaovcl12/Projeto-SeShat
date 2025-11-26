@@ -783,7 +783,7 @@ export function ChatPage() {
     const token = getAuthToken();
     if (!token) { setChatHistory(prev => [...prev, { id: Date.now(), text: 'Erro de autenticação.', sender: 'ai' }]); return; }
 
-    setChatHistory(prev => [...prev, { id: Date.now(), text: 'Analisando seu desempenho com IA...', sender: 'ai' }]);
+    setChatHistory(prev => [...prev, { id: Date.now(), text: 'Certo, vou analisar seu desempenho...', sender: 'ai' }]);
 
     try {
       const response = await fetch(`${API_URL}/ia/analise-erros`, {
@@ -796,7 +796,7 @@ export function ChatPage() {
       const analysisData: AnalysisData = await response.json();
 
       setChatHistory(prev => [
-        ...prev.filter(m => !('text' in m) || m.text !== 'Analisando seu desempenho com IA...'),
+        ...prev.filter(m => !('text' in m) || m.text !== 'Certo, vou analisar seu desempenho...'),
         { ...analysisData, type: 'analysis', id: Date.now() }
       ]);
 
