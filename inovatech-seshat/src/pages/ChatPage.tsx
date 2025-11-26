@@ -1,8 +1,7 @@
-// src/pages/ChatPage.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './ChatPage.module.css';
-import iaraImg from '/iara2.png';
+import iaraImg from '/iara.png';
 
 const API_URL = "https://seshat-api-m30w.onrender.com";
 
@@ -69,12 +68,13 @@ const AiAvatar = () => (
   </div>
 );
 
-const Sidebar = ({ isOpen, onToggle, activeSubject, onSubjectClick, subjects }: {
+const Sidebar = ({ isOpen, onToggle, activeSubject, onSubjectClick, subjects, isBusy }: { // <-- isBusy ADICIONADO AQUI
   isOpen: boolean;
   onToggle: () => void;
   activeSubject: string;
   onSubjectClick: (subject: string) => void;
   subjects: string[];
+  isBusy: boolean; // <-- NOVO PROP
 }) => (
   <div className={styles.glassPanel}>
     <div className={styles.sidebarHeader}>
@@ -86,7 +86,9 @@ const Sidebar = ({ isOpen, onToggle, activeSubject, onSubjectClick, subjects }: 
     {isOpen && (
       <ul className={styles.sidebarList}>
         {subjects.map((subject) => (
-          <li key={subject} className={`${styles.subjectItem} ${subject === activeSubject ? styles.active : ''} text-white-50`} onClick={() => onSubjectClick(subject)}>
+          <li key={subject} className={`${styles.subjectItem} ${subject === activeSubject ? styles.active : ''} ${isBusy ? styles.disabled : ''} text-white-50`} // <-- ADICIONA CLASSE 'disabled'
+            onClick={() => !isBusy && onSubjectClick(subject)} // <-- ADICIONA LÓGICA DE BLOQUEIO NO CLIQUE
+          >
             {subject}
           </li>
         ))}
@@ -96,7 +98,8 @@ const Sidebar = ({ isOpen, onToggle, activeSubject, onSubjectClick, subjects }: 
     {!isOpen && (
       <ul className={styles.sidebarList} style={{ paddingTop: '2rem' }}>
         {subjects.map((subject) => (
-          <li key={subject + '-icon'} title={subject} className={`${styles.subjectItem} ${subject === activeSubject ? styles.active : ''} justify-content-center`} onClick={() => onSubjectClick(subject)}>
+          <li key={subject + '-icon'} title={subject} className={`${styles.subjectItem} ${subject === activeSubject ? styles.active : ''} ${isBusy ? styles.disabled : ''} justify-content-center`} // <-- ADICIONA CLASSE 'disabled'
+            onClick={() => !isBusy && onSubjectClick(subject)}>
             <span className='fs-5'>{subject.charAt(0)}</span>
           </li>
         ))}
@@ -116,9 +119,10 @@ const ChatMessage = ({ msg }: { msg: Message }) => (
 
 // ALTERADO: Removemos a IAra daqui, agora ela é um componente separado
 // Adicionei onRequestHint na tipagem e nos argumentos
-const QuestionDisplay = ({ question, onAnswerSelect }: { // isLast REMOVIDO DA DESESTRUTURAÇÃO
+const QuestionDisplay = ({ question, onAnswerSelect, isBusy }: { // isLast REMOVIDO DA DESESTRUTURAÇÃO
   question: Question;
   onAnswerSelect: (optionKey: string) => void;
+  isBusy: boolean;
 }) => {
   const optionsArray = Array.isArray(question.options)
     ? question.options.map((text, index) => ({ key: String(index), text }))
@@ -126,7 +130,7 @@ const QuestionDisplay = ({ question, onAnswerSelect }: { // isLast REMOVIDO DA D
 
   const isSubjectSelection = Array.isArray(question.options) && question.subject === "Matérias";
   // LINHA CORRIGIDA
-  const isAnsweredOrOld = question.disabled; // Apenas desabilitar se a propriedade 'disabled' estiver em true
+  const isAnsweredOrOld = question.disabled || isBusy; // Apenas desabilitar se a propriedade 'disabled' estiver em true
 
   return (
     <div className={`${styles.messageBubble} ${styles.ai}`}>
@@ -411,6 +415,8 @@ export function ChatPage() {
 
   const [bubbleClass, setBubbleClass] = useState('');
 
+  const [isBusy, setIsBusy] = useState(false);
+
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -523,6 +529,8 @@ export function ChatPage() {
         { ...questionList[nextIndex], type: 'question' }
       ]);
     } else {
+      setQuestionList([]);
+      setCurrentQuestionIndex(0);
       setChatHistory(prev => [
         ...prev,
         { id: Date.now() + 2, text: 'Você terminou todas as questões que eu busquei! O que gostaria de fazer agora?', sender: 'ai' },
@@ -623,6 +631,8 @@ export function ChatPage() {
     const token = getAuthToken();
     if (!token) return;
 
+    setIsBusy(true);
+
     // 1. Calcula o próximo nível (1, 2, ou 3)
     const currentLevel = hintCounts[questionId] || 0;
     const nextLevel = Math.min(currentLevel + 1, 3);
@@ -660,6 +670,9 @@ export function ChatPage() {
         ...prev.filter(m => !('text' in m) || m.text !== "Pensando..."),
         { id: Date.now() + 2, text: "Desculpe, não consegui gerar uma dica agora.", sender: 'ai' }
       ]);
+    } finally {
+      // 2. DESLIGA O LOADING APÓS TUDO ESTAR CONCLUÍDO (SUCESSO OU ERRO)
+      setIsBusy(false);
     }
   };
 
@@ -875,36 +888,66 @@ export function ChatPage() {
   };
 
   const handleSubjectClick = (subject: string) => {
-    // 1. Define o que deve ser feito APÓS a animação (ou imediatamente)
+    // 1. Função que executa a troca de matéria (o restante da lógica)
     const proceedWithSubjectChange = () => {
+      setQuestionList([]);
+      setCurrentQuestionIndex(0);
+
+      // 🛑 CORREÇÃO PRINCIPAL: Desativa a última questão no chatHistory
+      setChatHistory(prevHistory => {
+        const historyCopy = [...prevHistory];
+
+        // Encontra o índice da última questão não desativada
+        let lastActiveQuestionIndex = -1;
+        for (let i = historyCopy.length - 1; i >= 0; i--) {
+          const item = historyCopy[i];
+          if ('type' in item && item.type === 'question' && item.disabled !== true) {
+            lastActiveQuestionIndex = i;
+            break;
+          }
+        }
+
+        // Se encontrar uma questão ativa, desativa-a
+        if (lastActiveQuestionIndex !== -1) {
+          const itemToDisable = historyCopy[lastActiveQuestionIndex];
+          historyCopy[lastActiveQuestionIndex] = { ...itemToDisable, disabled: true } as ChatItem;
+        }
+
+        // Se encontrar uma questão ativa, desativa-a
+        if (lastActiveQuestionIndex !== -1) {
+          const itemToDisable = historyCopy[lastActiveQuestionIndex];
+          historyCopy[lastActiveQuestionIndex] = { ...itemToDisable, disabled: true } as ChatItem;
+        }
+
+        // Remove menus de ação ou cronogramas antigos, e adiciona a nova mensagem e menu
+        const cleanHistory = historyCopy.filter(item =>
+          !('type' in item && (item.type === 'action_menu' || item.type === 'schedule' || item.type === 'weekly_schedule' || item.type === 'analysis'))
+        );
+
+        return [
+          ...cleanHistory,
+          { id: Date.now(), text: `Certo! Mudei o foco para ${subject}.`, sender: 'ai' },
+          { id: Date.now() + 1, type: 'action_menu' }
+        ];
+      });
+
       setActiveSubject(subject);
-      setChatHistory(prev => [
-        // Filtra a ação anterior e adiciona as novas mensagens
-        ...prev.filter(item => !('type' in item && (item.type === 'action_menu' || item.type === 'schedule' || item.type === 'weekly_schedule'))),
-        { id: Date.now(), text: `Certo! Mudei o foco para ${subject}.`, sender: 'ai' },
-        { id: Date.now() + 1, type: 'action_menu' }
-      ]);
     };
 
-    // 2. Se a dica estiver visível, inicia a animação
+    // 2. Lógica de animação do fade-out da mascote (mantida)
     if (showHintOffer) {
       setBubbleClass(styles['fade-out']);
 
-      // 3. Atraso de 300ms (duração da animação)
       setTimeout(() => {
-        // Garante o reset do estado da bolha
         setShowHintOffer(false);
         setBubbleClass('');
-
-        // 4. Executa o restante da lógica após o fade out
         proceedWithSubjectChange();
       }, 300);
 
-      // Sai da função, pois o restante será executado no setTimeout
       return;
     }
 
-    // 5. Se a dica NÃO estiver visível, executa imediatamente
+    // 3. Se a dica NÃO estiver visível, executa imediatamente
     proceedWithSubjectChange();
   };
 
@@ -918,6 +961,7 @@ export function ChatPage() {
             activeSubject={activeSubject}
             onSubjectClick={handleSubjectClick}
             subjects={subjectsList}
+            isBusy={isBusy}
           />
         </div>
       )}
@@ -935,6 +979,7 @@ export function ChatPage() {
                 key={item.id || index}
                 question={item}
                 onAnswerSelect={handleAnswerSelect}
+                isBusy={isBusy}
               />
             }
             if (item.type === 'action_menu') {
